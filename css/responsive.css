@@ -1,28 +1,82 @@
 /* ==========================================
-   Shahera Nayeb Laboratory School
-   Responsive Layout & Media Queries
+   Shahera Nayeb Laboratory High School
+   Comprehensive Responsive & Mobile Breakpoints
    ========================================== */
 
-/* Laptop & Desktop adjustments (Max 1024px) */
+/* Word wrap safety to prevent horizontal scrollbars on small screens */
+html, body {
+  overflow-x: hidden;
+  max-width: 100%;
+}
+
+h1, h2, h3, h4, h5, h6, p, span, a, li, td, th {
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+/* ==========================================
+   1. LAPTOP & TABLET LANDSCAPE (Max 1024px)
+   ========================================== */
 @media (max-width: 1024px) {
   .footer-grid {
     grid-template-columns: 1fr 1fr;
     gap: var(--space-8);
   }
+
+  .grid-contact-responsive {
+    grid-template-columns: 1fr;
+    gap: var(--space-8);
+  }
+
+  .grid-principal-responsive,
+  .principal-card {
+    grid-template-columns: 1fr;
+    gap: var(--space-6);
+    text-align: center;
+  }
+
+  .principal-img-wrapper {
+    max-width: 240px;
+    margin: 0 auto;
+  }
+
+  .principal-quote {
+    text-align: center;
+  }
 }
 
-/* Tablet & Mobile adjustments (Max 768px) */
+/* ==========================================
+   2. TABLET & MOBILE PORTRAIT (Max 768px)
+   ========================================== */
 @media (max-width: 768px) {
+  /* Top Info Bar adjustments */
   .top-bar-links {
     display: none;
   }
 
   .top-bar .container {
     justify-content: center;
+    padding-top: 4px;
+    padding-bottom: 4px;
   }
 
+  .top-bar-info {
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+  }
+
+  .top-bar-item {
+    font-size: 0.8125rem;
+  }
+
+  /* Navigation Bar Drawer */
   .mobile-toggle {
-    display: block;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    min-height: 44px;
   }
 
   .nav-menu {
@@ -36,8 +90,11 @@
     padding: var(--space-4);
     gap: var(--space-2);
     box-shadow: var(--shadow-xl);
-    border-bottom: 2px solid var(--accent-gold);
+    border-bottom: 3px solid var(--accent-gold);
     display: none;
+    max-height: 80vh;
+    overflow-y: auto;
+    z-index: 1000;
   }
 
   .nav-menu.is-active {
@@ -47,34 +104,130 @@
   .nav-link {
     padding: var(--space-3) var(--space-4);
     font-size: var(--text-base);
+    border-radius: var(--radius-md);
   }
 
   .header-actions {
     display: none;
   }
 
+  /* Hero Section */
+  .hero-section {
+    padding: var(--space-12) 0 var(--space-10) 0;
+  }
+
+  .hero-grid {
+    grid-template-columns: 1fr;
+    gap: var(--space-8);
+    text-align: center;
+  }
+
+  .hero-subtitle {
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .hero-actions {
+    justify-content: center;
+  }
+
+  .hero-card {
+    text-align: left;
+  }
+
+  /* Section Padding & Typography */
+  .section-padding {
+    padding-top: var(--space-10);
+    padding-bottom: var(--space-10);
+  }
+
+  h1 { font-size: clamp(1.75rem, 5vw, 2.5rem); }
+  h2 { font-size: var(--text-2xl); }
+  h3 { font-size: var(--text-xl); }
+
+  /* Utility Grid Helpers on Mobile */
+  .grid-2col-responsive {
+    grid-template-columns: 1fr;
+    gap: var(--space-6);
+  }
+
+  .grid-contact-responsive {
+    grid-template-columns: 1fr;
+    gap: var(--space-6);
+  }
+
+  .features-grid {
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: var(--space-4);
+  }
+
+  .events-grid {
+    grid-template-columns: 1fr;
+    gap: var(--space-6);
+  }
+
+  .contact-cards-grid {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--space-4);
+  }
+
+  /* Forms */
+  .form-grid {
+    grid-template-columns: 1fr;
+    gap: var(--space-4);
+  }
+
+  .form-grid-full {
+    grid-column: span 1;
+  }
+
+  .form-card {
+    padding: var(--space-6);
+  }
+
+  /* Footer */
   .footer-grid {
     grid-template-columns: 1fr;
     gap: var(--space-8);
   }
 
+  .footer-top {
+    padding: var(--space-10) 0 var(--space-8) 0;
+  }
+
   .footer-bottom .container {
     flex-direction: column;
     text-align: center;
+    gap: var(--space-2);
   }
 
-  h1 { font-size: var(--text-3xl); }
-  h2 { font-size: var(--text-2xl); }
-  h3 { font-size: var(--text-xl); }
-
-  .section-padding {
-    padding-top: var(--space-10);
-    padding-bottom: var(--space-10);
+  /* Table Container Scrolling */
+  .table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
 }
 
-/* Small mobile devices (Max 480px) */
+/* ==========================================
+   3. SMALL MOBILE DEVICES (Max 480px)
+   ========================================== */
 @media (max-width: 480px) {
+  .container {
+    padding-left: var(--space-4);
+    padding-right: var(--space-4);
+  }
+
+  /* Header Branding */
+  .brand-logo {
+    gap: var(--space-2);
+  }
+
+  .brand-img {
+    height: 42px;
+    max-width: 100px;
+  }
+
   .brand-emblem {
     width: 42px;
     height: 42px;
@@ -82,14 +235,153 @@
   }
 
   .brand-title-bn {
-    font-size: 1rem;
+    font-size: 0.95rem;
+    line-height: 1.2;
   }
 
   .brand-title-en {
-    font-size: 0.6875rem;
+    font-size: 0.625rem;
+    letter-spacing: 0.01em;
   }
 
   .brand-subtitle {
     display: none;
+  }
+
+  /* Hero Actions Button Stacking */
+  .hero-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .hero-actions .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .cta-banner {
+    padding: var(--space-8) var(--space-4);
+  }
+
+  .cta-banner .btn {
+    width: 100%;
+  }
+
+  /* Notice Cards Stacking */
+  .notice-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-3);
+  }
+
+  .notice-left {
+    width: 100%;
+    gap: var(--space-3);
+  }
+
+  .notice-card .btn {
+    width: 100%;
+    text-align: center;
+    justify-content: center;
+  }
+
+  /* Filter Bars */
+  .filter-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-3);
+  }
+
+  .filter-bar > div {
+    width: 100%;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .search-input {
+    min-width: 100%;
+    width: 100%;
+  }
+
+  /* Download Cards */
+  .download-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-3);
+  }
+
+  .download-card .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* Evaluation / Responsive List Helpers */
+  .flex-list-item {
+    flex-direction: column;
+    gap: var(--space-1);
+  }
+
+  .flex-list-label {
+    min-width: auto;
+  }
+
+  /* Map Container */
+  .map-wrapper {
+    height: 280px;
+  }
+
+  /* Lightbox Modal */
+  .lightbox-overlay {
+    padding: var(--space-3);
+  }
+
+  .lightbox-content {
+    padding: var(--space-4);
+    max-width: 95vw;
+  }
+
+  /* Accordion Trigger Spacing */
+  .accordion-trigger {
+    padding: var(--space-4);
+    font-size: var(--text-base);
+    gap: var(--space-2);
+  }
+
+  .accordion-content {
+    padding: 0 var(--space-4) var(--space-4) var(--space-4);
+    font-size: var(--text-sm);
+  }
+}
+
+/* ==========================================
+   4. ULTRA-SMALL MOBILE (Max 360px)
+   ========================================== */
+@media (max-width: 360px) {
+  .container {
+    padding-left: var(--space-3);
+    padding-right: var(--space-3);
+  }
+
+  .brand-title-bn {
+    font-size: 0.875rem;
+  }
+
+  .brand-title-en {
+    font-size: 0.5625rem;
+  }
+
+  .brand-img {
+    height: 36px;
+    max-width: 80px;
+  }
+
+  .top-bar-info {
+    font-size: 0.75rem;
+  }
+
+  .btn {
+    padding: 0.5rem 0.875rem;
+    font-size: var(--text-xs);
   }
 }
