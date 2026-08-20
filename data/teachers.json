@@ -1,0 +1,50 @@
+[
+  {
+    "id": 1,
+    "name": "[Teacher Name 1]",
+    "designation": "প্রধান শিক্ষক",
+    "department": "প্রশাসন",
+    "qualification": "এম.এ, বি.এড",
+    "image": "assets/images/placeholders/teacher-1.jpg"
+  },
+  {
+    "id": 2,
+    "name": "[Teacher Name 2]",
+    "designation": "সহকারী প্রধান শিক্ষক",
+    "department": "প্রশাসন",
+    "qualification": "এম.এসসি, বি.এড",
+    "image": "assets/images/placeholders/teacher-2.jpg"
+  },
+  {
+    "id": 3,
+    "name": "[Teacher Name 3]",
+    "designation": "সিনিয়র শিক্ষক (বিজ্ঞান)",
+    "department": "বিজ্ঞান",
+    "qualification": "এম.এসসি (পদার্থবিজ্ঞান)",
+    "image": "assets/images/placeholders/teacher-3.jpg"
+  },
+  {
+    "id": 4,
+    "name": "[Teacher Name 4]",
+    "designation": "সহকারী শিক্ষক (গণিত)",
+    "department": "বিজ্ঞান",
+    "qualification": "বি.এসসি (সম্মান), গণিত",
+    "image": "assets/images/placeholders/teacher-4.jpg"
+  },
+  {
+    "id": 5,
+    "name": "[Teacher Name 5]",
+    "designation": "সহকারী শিক্ষক (আইসিটি)",
+    "department": "আইসিটি",
+    "qualification": "বি.এসসি (সিএসই)",
+    "image": "assets/images/placeholders/teacher-5.jpg"
+  },
+  {
+    "id": 6,
+    "name": "[Teacher Name 6]",
+    "designation": "সহকারী শিক্ষক (ইংরেজি)",
+    "department": "মানবিক",
+    "qualification": "এম.এ (ইংরেজি)",
+    "image": "assets/images/placeholders/teacher-6.jpg"
+  }
+]

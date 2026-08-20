@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="bn" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ইভেন্ট ও ফটোগ্যালারি | সাহেরা নায়েব ল্যাবরেটরি হাই স্কুল</title>
+  <meta name="description" content="সাহেরা নায়েব ল্যাবরেটরি হাই স্কুলের বিভিন্ন অনুষ্ঠান, ইভেন্ট, ক্রীড়া প্রতিযোগিতা ও ফটোগ্যালারি।">
+  <link rel="canonical" href="https://shaheranayebschool.edu.bd/pages/events-gallery.html">
+
+  <!-- OpenGraph Meta Tags -->
+  <meta property="og:site_name" content="সাহেরা নায়েব ল্যাবরেটরি হাই স্কুল">
+  <meta property="og:title" content="ইভেন্ট ও ফটোগ্যালারি | সাহেরা নায়েব ল্যাবরেটরি হাই স্কুল">
+  <meta property="og:description" content="সাহেরা নায়েব ল্যাবরেটরি হাই স্কুলের সাংস্কৃতিক, ক্রীড়া ও সহ-শিক্ষা কার্যক্রমের ফটোগ্যালারি।">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://shaheranayebschool.edu.bd/pages/events-gallery.html">
+  <meta property="og:image" content="../assets/images/logo.png">
+  <meta property="og:locale" content="bn_BD">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="ইভেন্ট ও গ্যালারি | সাহেরা নায়েব ল্যাবরেটরি হাই স্কুল">
+  <meta name="twitter:description" content="ক্যাম্পাস ইভেন্ট ও সহ-শিক্ষা কার্যক্রমের চিত্রমালা।">
+
+  <!-- Schema.org JSON-LD -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "ImageGallery",
+    "name": "ইভেন্ট ও ফটোগ্যালারি",
+    "url": "https://shaheranayebschool.edu.bd/pages/events-gallery.html",
+    "description": "সাহেরা নায়েব ল্যাবরেটরি হাই স্কুলের সকল ক্যাম্পাস ইভেন্ট ও ছবি।"
+  }
+  </script>
+
+  <link rel="icon" type="image/png" href="../assets/icons/favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="../css/variables.css">
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+
+  <style>
+    .gallery-filter-btn {
+      padding: var(--space-2) var(--space-4);
+      background: var(--white);
+      border: 1px solid var(--neutral-300);
+      border-radius: var(--radius-full);
+      font-size: var(--text-sm);
+      font-weight: 600;
+      cursor: pointer;
+      color: var(--neutral-700);
+      transition: all var(--transition-fast);
+    }
+    .gallery-filter-btn:hover, .gallery-filter-btn.active {
+      background: var(--primary-700);
+      color: var(--white);
+      border-color: var(--primary-700);
+    }
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: var(--space-6);
+    }
+    .gallery-card {
+      background: var(--white);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      border: 1px solid var(--neutral-200);
+      cursor: pointer;
+      box-shadow: var(--shadow-sm);
+      transition: all var(--transition-fast);
+    }
+    .gallery-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-md);
+    }
+    .gallery-img-wrapper {
+      width: 100%;
+      height: 200px;
+      background: var(--neutral-200);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--neutral-500);
+      font-weight: 600;
+    }
+    .gallery-caption {
+      padding: var(--space-4);
+      font-size: var(--text-sm);
+      font-weight: 600;
+      color: var(--primary-900);
+      text-align: center;
+    }
+
+    /* Lightbox Modal Styles */
+    .lightbox-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(5px);
+      z-index: 2000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: var(--space-6);
+    }
+    .lightbox-overlay.is-active {
+      display: flex;
+    }
+    .lightbox-content {
+      background: var(--white);
+      border-radius: var(--radius-xl);
+      max-width: 600px;
+      width: 100%;
+      padding: var(--space-6);
+      text-align: center;
+      position: relative;
+    }
+    .lightbox-close {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      background: var(--neutral-200);
+      border: none;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-weight: 800;
+    }
+  </style>
+</head>
+<body>
+
+  <a href="#main-content" class="skip-link">মূল বিষয়বস্তুতে যান (Skip to content)</a>
+
+  <!-- Top Bar -->
+  <div class="top-bar">
+    <div class="container">
+      <div class="top-bar-info">
+        <div class="top-bar-item">
+          <svg viewBox="0 0 24 24"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
+          <span>ফোন: [Official Phone Number]</span>
+        </div>
+        <div class="top-bar-item">
+          <svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
+          <span>ইমেইল: [Official Email]</span>
+        </div>
+      </div>
+      <div class="top-bar-links">
+        <a href="notices.html" class="top-bar-link">জরুরী নোটিশ</a>
+        <a href="admission.html" class="top-bar-link">ভর্তি তথ্য</a>
+        <a href="contact.html" class="top-bar-link">যোগাযোগ</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Header -->
+  <header class="site-header">
+    <div class="container">
+      <nav class="navbar" aria-label="প্রধান নেভিগেশন">
+        <a href="../index.html" class="brand-logo" title="সাহেরা নায়েব ল্যাবরেটরি হাই স্কুল হোম">
+          <img src="../assets/images/logo.png" alt="সাহেরা নায়েব ল্যাবরেটরি হাই স্কুল লোগো" class="brand-img">
+          <div class="brand-text">
+            <span class="brand-title-bn">সাহেরা নায়েব ল্যাবরেটরি হাই স্কুল</span>
+            <span class="brand-title-en">Shahera Nayeb Laboratory High School</span>
+            <span class="brand-subtitle">শিক্ষা • শৃঙ্খলা • চরিত্র</span>
+          </div>
+        </a>
+
+        <button class="mobile-toggle" id="mobileNavToggle" aria-label="মেনু টগল করুন" aria-expanded="false" aria-controls="primaryNavMenu">
+          <svg viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
+        </button>
+
+        <ul class="nav-menu" id="primaryNavMenu">
+          <li><a href="../index.html" class="nav-link">হোম</a></li>
+          <li><a href="about.html" class="nav-link">আমাদের কথা</a></li>
+          <li><a href="academics.html" class="nav-link">একাডেমিক</a></li>
+          <li><a href="faculty.html" class="nav-link">শিক্ষক ও স্টাফ</a></li>
+          <li><a href="notices.html" class="nav-link">নোটিশ বোর্ড</a></li>
+          <li><a href="events-gallery.html" class="nav-link active">ইভেন্ট ও গ্যালারি</a></li>
+          <li><a href="admission.html" class="nav-link">ভর্তি তথ্য</a></li>
+          <li><a href="contact.html" class="nav-link">যোগাযোগ</a></li>
+        </ul>
+
+        <div class="header-actions">
+          <a href="admission.html" class="btn btn-primary">অনলাইন ভর্তি</a>
+        </div>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Page Banner -->
+  <section class="bg-navy" style="padding: var(--space-12) 0; background: linear-gradient(135deg, var(--primary-900), var(--primary-800)); color: white;">
+    <div class="container">
+      <h1 style="color: var(--white); font-size: var(--text-4xl); margin-bottom: var(--space-2);">ইভেন্ট ও ফটোগ্যালারি</h1>
+      <p style="color: var(--neutral-300);">বিদ্যালয়ের সাংস্কৃতিক, ক্রীড়া ও সহ-শিক্ষা কার্যক্রমের চিত্রমালা</p>
+    </div>
+  </section>
+
+  <!-- Main Content -->
+  <main id="main-content">
+    
+    <!-- Events Section -->
+    <section class="section-padding bg-light">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-badge">অনুষ্ঠানসূচী</span>
+          <h2 class="section-title">সাম্প্রতিক ও আসন্ন ইভেন্টসমূহ</h2>
+        </div>
+
+        <div class="events-grid">
+          <div class="event-card">
+            <div class="event-img"><span>[Event Photo]</span></div>
+            <div class="event-body">
+              <span class="event-meta">২০ ফেব্রুয়ারি, ২০২৬ | ক্রীড়া</span>
+              <h3 class="event-title">বার্ষিক ক্রীড়া প্রতিযোগিতা ও পুরস্কার বিতরণী</h3>
+              <p style="font-size: var(--text-sm); color: var(--neutral-600);">মনোজ্ঞ সাংস্কৃতিক অনুষ্ঠান ও শিক্ষার্থীদের স্বতঃস্ফূর্ত অংশগ্রহণে প্রতিযোগিতা অনুষ্ঠিত।</p>
+            </div>
+          </div>
+
+          <div class="event-card">
+            <div class="event-img"><span>[Event Photo]</span></div>
+            <div class="event-body">
+              <span class="event-meta">১৫ মার্চ, ২০২৬ | বিজ্ঞান ও প্রযুক্তি</span>
+              <h3 class="event-title">বিজ্ঞান মেলা ও তথ্যপ্রযুক্তি প্রদর্শনী</h3>
+              <p style="font-size: var(--text-sm); color: var(--neutral-600);">শিক্ষার্থীদের তৈরি বৈজ্ঞানিক প্রজেক্ট ও ইনোভেশন প্রদর্শন করা হয়।</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Photo Gallery Section -->
+    <section class="section-padding bg-white">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-badge">ফটোগ্যালারি</span>
+          <h2 class="section-title">ক্যাম্পাস ও কর্মকাণ্ডের ছবি</h2>
+        </div>
+
+        <div style="display: flex; gap: var(--space-2); flex-wrap: wrap; justify-content: center; margin-bottom: var(--space-8);">
+          <button class="gallery-filter-btn active" data-category="all">সব ছবি</button>
+          <button class="gallery-filter-btn" data-category="campus">ক্যাম্পাস</button>
+          <button class="gallery-filter-btn" data-category="sports">ক্রীড়া</button>
+          <button class="gallery-filter-btn" data-category="science">বিজ্ঞান মেলা</button>
+          <button class="gallery-filter-btn" data-category="cultural">সাংস্কৃতিক</button>
+        </div>
+
+        <div class="gallery-grid">
+          <div class="gallery-card" data-category="sports" data-title="বার্ষিক ক্রীড়া প্রতিযোগিতা ২০২৬">
+            <div class="gallery-img-wrapper"><span>[Sports Photo]</span></div>
+            <div class="gallery-caption">বার্ষিক ক্রীড়া প্রতিযোগিতা ২০২৬</div>
+          </div>
+
+          <div class="gallery-card" data-category="science" data-title="বিজ্ঞান মেলা ও রোবোটিক্স প্রদর্শনী">
+            <div class="gallery-img-wrapper"><span>[Science Fair Photo]</span></div>
+            <div class="gallery-caption">বিজ্ঞান মেলা ও প্রদর্শন</div>
+          </div>
+
+          <div class="gallery-card" data-category="cultural" data-title="আন্তর্জাতিক মাতৃভাষা দিবস উদযাপন">
+            <div class="gallery-img-wrapper"><span>[Cultural Photo]</span></div>
+            <div class="gallery-caption">আন্তর্জাতিক মাতৃভাষা দিবস</div>
+          </div>
+
+          <div class="gallery-card" data-category="campus" data-title="কম্পিউটার ও আইসিটি ল্যাব">
+            <div class="gallery-img-wrapper"><span>[ICT Lab Photo]</span></div>
+            <div class="gallery-caption">কম্পিউটার ও আইসিটি ল্যাব</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Lightbox Modal -->
+  <div class="lightbox-overlay" id="lightboxModal" aria-hidden="true" role="dialog" aria-modal="true">
+    <div class="lightbox-content">
+      <button class="lightbox-close" id="lightboxClose" aria-label="বন্ধ করুন">✕</button>
+      <div style="width: 100%; height: 260px; background: var(--neutral-200); border-radius: var(--radius-lg); display: flex; align-items: center; justify-content: center; margin-bottom: var(--space-4);">
+        <span>[Full Image Preview Placeholder]</span>
+      </div>
+      <p id="lightboxCaption" style="font-weight: 700; color: var(--primary-900); font-size: var(--text-base);"></p>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div class="footer-top">
+      <div class="container">
+        <div class="footer-grid">
+          <div class="footer-brand">
+            <a href="../index.html" class="brand-logo">
+              <img src="../assets/images/logo.png" alt="সাহেরা নায়েব ল্যাবরেটরি হাই স্কুল লোগো" class="brand-img">
+              <div class="brand-text">
+                <span class="brand-title-bn">সাহেরা নায়েব ল্যাবরেটরি হাই স্কুল</span>
+                <span class="brand-title-en">Shahera Nayeb Laboratory High School</span>
+              </div>
+            </a>
+            <p class="footer-description">
+              শিক্ষার্থীদের মেধা, নৈতিকতা ও সৃজনশীলতার বিকাশ ঘটিয়ে একবিংশ শতাব্দীর চ্যালেঞ্জ মোকাবেলায় যোগ্য নাগরিক হিসেবে গড়ে তোলাই আমাদের লক্ষ্য।
+            </p>
+          </div>
+          <div>
+            <h2 class="footer-heading">দ্রুত লিঙ্ক</h2>
+            <ul class="footer-links">
+              <li><a href="about.html">আমাদের কথা</a></li>
+              <li><a href="academics.html">একাডেমিক তথ্য</a></li>
+              <li><a href="faculty.html">শিক্ষক মণ্ডলী</a></li>
+              <li><a href="admission.html">ভর্তির নির্দেশিকা</a></li>
+              <li><a href="notices.html">নোটিশ বোর্ড</a></li>
+            </ul>
+          </div>
+          <div>
+            <h2 class="footer-heading">গুরুত্বপূর্ণ</h2>
+            <ul class="footer-links">
+              <li><a href="notices.html">পরীক্ষার রুটিন</a></li>
+              <li><a href="academics.html">একাডেমিক ক্যালেন্ডার</a></li>
+              <li><a href="events-gallery.html">ফটোগ্যালারি</a></li>
+              <li><a href="contact.html">যোগাযোগ</a></li>
+            </ul>
+          </div>
+          <div>
+            <h2 class="footer-heading">যোগাযোগ</h2>
+            <div class="footer-contact-list">
+              <div class="footer-contact-item"><span>[School Address Placeholder]</span></div>
+              <div class="footer-contact-item"><span>[Official Phone Number]</span></div>
+              <div class="footer-contact-item"><span>[Official Email]</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div class="container">
+        <p>© 2026 সাহেরা নায়েব ল্যাবরেটরি হাই স্কুল। সর্বস্বত্ব সংরক্ষিত।</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="../js/main.js"></script>
+  <script src="../js/gallery.js"></script>
+</body>
+</html>

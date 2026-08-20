@@ -1,0 +1,95 @@
+/* ==========================================
+   Shahera Nayeb Laboratory School
+   Responsive Layout & Media Queries
+   ========================================== */
+
+/* Laptop & Desktop adjustments (Max 1024px) */
+@media (max-width: 1024px) {
+  .footer-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-8);
+  }
+}
+
+/* Tablet & Mobile adjustments (Max 768px) */
+@media (max-width: 768px) {
+  .top-bar-links {
+    display: none;
+  }
+
+  .top-bar .container {
+    justify-content: center;
+  }
+
+  .mobile-toggle {
+    display: block;
+  }
+
+  .nav-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background-color: var(--white);
+    flex-direction: column;
+    align-items: stretch;
+    padding: var(--space-4);
+    gap: var(--space-2);
+    box-shadow: var(--shadow-xl);
+    border-bottom: 2px solid var(--accent-gold);
+    display: none;
+  }
+
+  .nav-menu.is-active {
+    display: flex;
+  }
+
+  .nav-link {
+    padding: var(--space-3) var(--space-4);
+    font-size: var(--text-base);
+  }
+
+  .header-actions {
+    display: none;
+  }
+
+  .footer-grid {
+    grid-template-columns: 1fr;
+    gap: var(--space-8);
+  }
+
+  .footer-bottom .container {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  h1 { font-size: var(--text-3xl); }
+  h2 { font-size: var(--text-2xl); }
+  h3 { font-size: var(--text-xl); }
+
+  .section-padding {
+    padding-top: var(--space-10);
+    padding-bottom: var(--space-10);
+  }
+}
+
+/* Small mobile devices (Max 480px) */
+@media (max-width: 480px) {
+  .brand-emblem {
+    width: 42px;
+    height: 42px;
+    font-size: 1.1rem;
+  }
+
+  .brand-title-bn {
+    font-size: 1rem;
+  }
+
+  .brand-title-en {
+    font-size: 0.6875rem;
+  }
+
+  .brand-subtitle {
+    display: none;
+  }
+}

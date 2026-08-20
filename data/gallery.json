@@ -1,0 +1,50 @@
+[
+  {
+    "id": 1,
+    "title": "বার্ষিক ক্রীড়া প্রতিযোগিতা ২০২৬",
+    "category": "sports",
+    "categoryBn": "ক্রীড়া",
+    "image": "assets/images/placeholders/gallery-1.jpg",
+    "alt": "বিদ্যালয়ের বার্ষিক ক্রীড়া প্রতিযোগিতার দৃশ্য"
+  },
+  {
+    "id": 2,
+    "title": "বিজ্ঞান মেলা ও রোবোটিক্স প্রদর্শনী",
+    "category": "science",
+    "categoryBn": "বিজ্ঞান মেলা",
+    "image": "assets/images/placeholders/gallery-2.jpg",
+    "alt": "বিজ্ঞান মেলায় শিক্ষার্থীদের উদ্ভাবনী প্রজেক্ট"
+  },
+  {
+    "id": 3,
+    "title": "আন্তর্জাতিক মাতৃভাষা দিবস উদযাপন",
+    "category": "cultural",
+    "categoryBn": "সাংস্কৃতিক",
+    "image": "assets/images/placeholders/gallery-3.jpg",
+    "alt": "শহীদ মিনারে পুষ্পস্তবক অর্পণ"
+  },
+  {
+    "id": 4,
+    "title": "ক্যাম্পাস ও সুসজ্জিত বাগান",
+    "category": "campus",
+    "categoryBn": "ক্যাম্পাস",
+    "image": "assets/images/placeholders/gallery-4.jpg",
+    "alt": "বিদ্যালয়ের মনোরম ক্যাম্পাস দৃশ্য"
+  },
+  {
+    "id": 5,
+    "title": "কম্পিউটার ও আইসিটি ল্যাব ক্লাস",
+    "category": "campus",
+    "categoryBn": "ক্যাম্পাস",
+    "image": "assets/images/placeholders/gallery-5.jpg",
+    "alt": "কম্পিউটার ল্যাবে শিক্ষার্থীদের পাঠদান"
+  },
+  {
+    "id": 6,
+    "title": "বার্ষিক পুরস্কার বিতরণী অনুষ্ঠান",
+    "category": "cultural",
+    "categoryBn": "সাংস্কৃতিক",
+    "image": "assets/images/placeholders/gallery-6.jpg",
+    "alt": "পুরস্কার বিতরণী মঞ্চের ছবি"
+  }
+]
