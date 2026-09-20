@@ -439,17 +439,60 @@
   </footer>
 
   <script src="../js/main.js"></script>
+  <script src="../js/google-drive-integration.js"></script>
   <script>
-    // Admission Form Submit Interaction
+    // Admission Form Submit Interaction (Google Sheets & Drive Backend)
     const admissionForm = document.getElementById('admissionForm');
     const admissionFormToast = document.getElementById('admissionFormToast');
 
     if (admissionForm) {
-      admissionForm.addEventListener('submit', function(e) {
+      admissionForm.addEventListener('submit', async function(e) {
         e.preventDefault();
-        admissionFormToast.style.display = 'block';
-        admissionForm.reset();
-        admissionFormToast.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        const submitBtn = admissionForm.querySelector('button[type="submit"]');
+        const origText = submitBtn.textContent;
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'আবেদন জমা দেওয়া হচ্ছে...';
+
+        const photoFileInput = document.getElementById('studentPhoto');
+        let photoBase64 = '';
+        let photoMimeType = '';
+
+        if (photoFileInput && photoFileInput.files && photoFileInput.files[0]) {
+          const file = photoFileInput.files[0];
+          photoMimeType = file.type;
+          photoBase64 = await new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = (e) => resolve(e.target.result.split(',')[1]);
+            reader.readAsDataURL(file);
+          });
+        }
+
+        const payload = {
+          studentName: document.getElementById('studentName')?.value || '',
+          applyClass: document.getElementById('applyClass')?.value || '',
+          gender: document.getElementById('gender')?.value || '',
+          dob: document.getElementById('dob')?.value || '',
+          fatherName: document.getElementById('fatherName')?.value || '',
+          motherName: document.getElementById('motherName')?.value || '',
+          phone: document.getElementById('guardianPhone')?.value || '',
+          address: document.getElementById('address')?.value || '',
+          photoBase64: photoBase64,
+          photoMimeType: photoMimeType
+        };
+
+        try {
+          if (typeof submitAdmissionToGoogleSheet === 'function') {
+            await submitAdmissionToGoogleSheet(payload);
+          }
+          admissionFormToast.style.display = 'block';
+          admissionForm.reset();
+          admissionFormToast.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        } catch (err) {
+          alert('আবেদন জমা দিতে সমস্যা হয়েছে, অনুগ্রহ করে তথ্য পরীক্ষা করে পুনরায় চেষ্টা করুন।');
+        } finally {
+          submitBtn.disabled = false;
+          submitBtn.textContent = origText;
+        }
       });
     }
 
