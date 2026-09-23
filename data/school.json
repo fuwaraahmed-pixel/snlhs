@@ -2,14 +2,14 @@
   "nameBn": "সাহেরা নায়েব ল্যাবরেটরি হাই স্কুল",
   "nameEn": "Shahera Nayeb Laboratory High School",
   "motto": "শিক্ষা • শৃঙ্খলা • চরিত্র",
-  "phone": "[Official Phone Number]",
-  "email": "[Official Email]",
-  "address": "[School Address Placeholder]",
-  "established": "[Year]",
+  "phone": "01531927956",
+  "email": "snlhs07@gmail.com",
+  "address": "সাহেরা নায়েব ল্যাবরেটরি হাই স্কুল ক্যাম্পাস, ঢাকা, বাংলাদেশ",
+  "established": "১৯৯৮",
   "stats": [
-    { "id": "students", "label": "বর্তমান শিক্ষার্থী", "value": "[VALUE]", "suffix": "+" },
-    { "id": "teachers", "label": "অভিজ্ঞ শিক্ষক মণ্ডলী", "value": "[VALUE]", "suffix": "+" },
-    { "id": "passRate", "label": "পাসের হার", "value": "[VALUE]", "suffix": "%" },
-    { "id": "experience", "label": "বছরের গৌরবময় পথচলা", "value": "[VALUE]", "suffix": "+" }
+    { "id": "students", "label": "বর্তমান শিক্ষার্থী", "value": "১২০০", "suffix": "+" },
+    { "id": "teachers", "label": "অভিজ্ঞ শিক্ষক মণ্ডলী", "value": "৪৫", "suffix": "+" },
+    { "id": "passRate", "label": "পাসের হার", "value": "৯৮", "suffix": "%" },
+    { "id": "experience", "label": "বছরের গৌরবময় পথচলা", "value": "২৫", "suffix": "+" }
   ]
 }

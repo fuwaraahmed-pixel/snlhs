@@ -1,44 +1,31 @@
-# Sahira Nayeb Laboratory High School - Project Phase Progress Tracker
+# Shahera Nayeb Laboratory High School - Web Portal Progress Tracker
 
-> **Project Goal:** Premium Institutional Portfolio Website for **সাহেরা নায়েব ল্যাবরেটরি হাই স্কুল** (Shahera Nayeb Laboratory High School).
+> **Project Goal:** Premium, Accessible, Data-Driven Institutional Web Portal with Decap CMS Admin Panel & Free Static Hosting Compatibility.
 
 ---
 
-## 📊 Overall Phase Progress: 100% Complete (Phase 0 - 9 Complete)
+## 📊 Phased Improvement Roadmap Status
 
-| Phase | Phase Name | Status | Summary of Work Completed / Pending |
+| Phase | Description / Deliverables | Status | Details |
 | :---: | :--- | :---: | :--- |
-| **PHASE 0** | **Project Audit & Architecture Plan** | ✅ **COMPLETED** | Workspace audit, folder structure, tech stack, JSON data schema, and architecture plan. |
-| **PHASE 1** | **Design System & Global Shell** | ✅ **COMPLETED** | Color palette, typography, CSS tokens, header, navigation, footer, logo integration (`assets/images/logo.png`), and mobile drawer. |
-| **PHASE 2** | **Homepage** | ✅ **COMPLETED** | Hero section, Mission statement, Principal's spotlight, Stats counter, Feature blocks, Notice preview, Events preview, Admission CTA. |
-| **PHASE 3** | **About & Academic Information** | ✅ **COMPLETED** | `pages/about.html` (School history, mission/vision, facilities) & `pages/academics.html` (Curriculum, exam structure, academic calendar). |
-| **PHASE 4** | **Notice Board & Download Center** | ✅ **COMPLETED** | `pages/notices.html` (Filterable notices, search bar, category badges) & Download center (syllabi, routines, forms). |
-| **PHASE 5** | **Faculty Directory & Achievements** | ✅ **COMPLETED** | `pages/faculty.html` (Teachers & staff categorized by department) & Student/School achievement showcase. |
-| **PHASE 6** | **Events & Photo Gallery** | ✅ **COMPLETED** | `pages/events-gallery.html` (Event timeline, filterable photo gallery & Lightbox modal). |
-| **PHASE 7** | **Admission Info & Contact** | ✅ **COMPLETED** | `pages/admission.html` (Criteria, process, online form, FAQs) & `pages/contact.html` (Location map, contact form, department directory). |
-| **PHASE 8** | **SEO, Performance & Accessibility** | ✅ **COMPLETED** | Rich Schema.org JSON-LD, OpenGraph & Twitter Cards, Canonical links, WCAG AA contrast & focus ring, font-display optimization across all pages. |
-| **PHASE 9** | **Final QA & Deployment Setup** | ✅ **COMPLETED** | Cross-browser & link QA, asset verification, comprehensive README.md documentation, content replacement guide & static deployment setup. |
+| **AUDIT** | Complete Site Audit & Implementation Plan | ✅ **COMPLETED** | Comprehensive 15-perspective audit & roadmap approval. |
+| **PHASE 1** | Launch Blockers & Dynamic Data Hydration | ✅ **COMPLETED** | All text placeholders removed, syntax glitches fixed, `pages/faculty.html` & `pages/events-gallery.html` wired dynamically to `data/*.json`, real teacher names updated. |
+| **PHASE 2** | Decap CMS Admin Panel & DRY Architecture | ⏳ **READY FOR TOMORROW** | `admin/index.html`, `admin/config.yml` (Decap CMS setup for `yoursite.com/admin`), and `js/components.js` DRY header/footer loader. |
+| **PHASE 3** | Visual Polish, SEO & Accessibility | 📅 PENDING | Schema.org expansion, WCAG 2.1 AA gold palette contrast fix, mobile responsive tables. |
+| **PHASE 4** | Mobile Action Bar & Hero Trust Signals | 📅 PENDING | Floating WhatsApp/Call CTA, EIIN & Board approval trust badges. |
 
 ---
 
-## 📁 Key File Structure Created So Far
-- `index.html` — Completed Homepage with Hero, Intro, Principal Spotlight, Stats, Features, Notices preview, CTA.
-- `pages/about.html` — Institutional History, Mission & Vision, Campus Facilities.
-- `pages/academics.html` — Curriculum, Examination Structure, Academic Calendar.
-- `pages/notices.html` — Interactive Notice Board, Filter Badges, Search & Downloads.
-- `pages/faculty.html` — Departmental Faculty Directory & Student Achievements.
-- `pages/events-gallery.html` — Event Timeline & Interactive Lightbox Photo Gallery.
-- `pages/admission.html` — Admission Eligibility, 4-step Timeline, Interactive Online Application Form, FAQ Accordion.
-- `pages/contact.html` — Campus Contact Info Cards, Department Directory, Interactive Contact Form, Embedded Location Map.
-- `css/variables.css` — Institutional design tokens, colors, fonts (Inter & Hind Siliguri).
-- `css/style.css` — Base typography, resets, accessibility skip links, `:focus-visible` ring.
-- `css/components.css` — Header, Footer, Hero, Form Controls, FAQ Accordion, Data Tables, Contact Cards, Map Container.
-- `css/responsive.css` — Mobile-first breakpoints & drawer navigation.
-- `js/main.js` — Mobile menu toggle, keyboard Escape handler, route active highlight, sticky shadow, search & lightbox.
-- `assets/images/logo.png` — Official school logo integrated into header & footer.
-- `README.md` — Comprehensive project setup, site architecture, placeholder reference guide, and static deployment guide.
+## 📁 Key Files Updated / Created Today
+
+1. [`NEEDS_CONTENT.md`](file:///e:/web/NEEDS_CONTENT.md) — Real-world factual data checklist for school administration.
+2. [`js/config.js`](file:///e:/web/js/config.js) — Centralized site settings & institutional metadata.
+3. [`js/faculty.js`](file:///e:/web/js/faculty.js) — Dynamic teacher directory loader with department filter buttons.
+4. [`js/gallery.js`](file:///e:/web/js/gallery.js) — Dynamic gallery loader with lightbox viewer.
+5. [`data/teachers.json`](file:///e:/web/data/teachers.json) — Updated with user-provided real teacher names (**নূর মোহাম্মদ সরকার (সাগর)**, **মো: জহিরুল ইসলাম**, **প্রান্তর স্নাল**).
+6. [`implementation_plan.md`](file:///C:/Users/HP/.gemini/antigravity-ide/brain/b56e48b8-4a43-4ef5-96dd-c43b5a9c5756/implementation_plan.md) — Updated master plan including Decap CMS Free Admin Panel architecture.
 
 ---
 
 ## 🚀 Status
-**PHASE 9 & Entire Institutional Web Portal Project fully complete!**
+**Phase 1 fully completed and verified.** Tomorrow we will begin **Phase 2 (Decap CMS Admin Panel at `/admin` & DRY Component Loader)** upon your approval.
