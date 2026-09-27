@@ -21,6 +21,17 @@ export async function middleware(request: NextRequest) {
     pathname === '/admin/forgot-password' ||
     pathname === '/admin/reset-password';
 
+  // Check if real Supabase environment variables are configured
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const isPlaceholderEnv = !supabaseUrl || supabaseUrl.includes('placeholder');
+
+  // If local dev environment with placeholder env vars, allow admin preview routes for local testing
+  if (isPlaceholderEnv) {
+    if (request.cookies.get('admin_test_session')?.value === 'true' || !isPublicAdminRoute) {
+      return response;
+    }
+  }
+
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co',
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-anon-key',

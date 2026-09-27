@@ -1,7 +1,22 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Plus, Search, Trash2, Edit3, Eye, FileText, CheckCircle, XCircle } from 'lucide-react';
+import { Plus, Search, Trash2, Edit3, CheckCircle, XCircle, Upload, FileText, Download } from 'lucide-react';
+import { uploadFileToStorage } from '@/lib/storage/upload';
+import { getStoragePublicUrl } from '@/lib/storage/url-builder';
+import { validateFileUploadServerAction } from '@/lib/actions/upload-actions';
+
+interface NoticeItem {
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  pub_date: string;
+  attachment_url: string | null;
+  attachment_original_name: string | null;
+  is_important: boolean;
+  is_published: boolean;
+}
 
 export default function NoticeManagementPage() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -15,14 +30,23 @@ export default function NoticeManagementPage() {
   const [isImportant, setIsImportant] = useState(false);
   const [isPublished, setIsPublished] = useState(true);
 
-  // Sample notices list
-  const [notices, setNotices] = useState([
+  // Attachment file upload states
+  const [attachmentFile, setAttachmentFile] = useState<File | null>(null);
+  const [attachmentRelativePath, setAttachmentRelativePath] = useState<string | null>(null);
+  const [attachmentOriginalName, setAttachmentOriginalName] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
+  // Sample notices list with relative path attachment_url and attachment_original_name
+  const [notices, setNotices] = useState<NoticeItem[]>([
     {
       id: '1',
       title: 'বার্ষিক ক্রীড়া প্রতিযোগিতা ২০২৬ সংক্রান্ত বিজ্ঞপ্তি',
       description: 'আগামী ১৫ আগস্ট স্কুলে বার্ষিক ক্রীড়া প্রতিযোগিতা অনুষ্ঠিত হবে।',
       category: 'ইভেন্ট',
       pub_date: '2026-08-15',
+      attachment_url: 'snlhs/notices/1727440000_sports_notice.pdf',
+      attachment_original_name: 'বার্ষিক_ক্রীড়া_বিজ্ঞপ্তি.pdf',
       is_important: true,
       is_published: true,
     },
@@ -32,12 +56,16 @@ export default function NoticeManagementPage() {
       description: 'অর্ধ-বার্ষিক পরীক্ষার পূর্ণাঙ্গ রুটিন প্রকাশিত হলো।',
       category: 'পরীক্ষা',
       pub_date: '2026-08-10',
+      attachment_url: null,
+      attachment_original_name: null,
       is_important: false,
       is_published: true,
     },
   ]);
 
-  const handleOpenModal = (notice?: any) => {
+  const handleOpenModal = (notice?: NoticeItem) => {
+    setUploadError(null);
+    setAttachmentFile(null);
     if (notice) {
       setEditingId(notice.id);
       setTitle(notice.title);
@@ -45,6 +73,8 @@ export default function NoticeManagementPage() {
       setCategory(notice.category || 'সাধারণ');
       setIsImportant(notice.is_important);
       setIsPublished(notice.is_published);
+      setAttachmentRelativePath(notice.attachment_url);
+      setAttachmentOriginalName(notice.attachment_original_name);
     } else {
       setEditingId(null);
       setTitle('');
@@ -52,15 +82,64 @@ export default function NoticeManagementPage() {
       setCategory('সাধারণ');
       setIsImportant(false);
       setIsPublished(true);
+      setAttachmentRelativePath(null);
+      setAttachmentOriginalName(null);
     }
     setIsModalOpen(true);
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadError(null);
+    setIsUploading(true);
+
+    try {
+      // 1. Server action double validation
+      const serverValidation = await validateFileUploadServerAction(
+        'notice-files',
+        file.name,
+        file.size,
+        file.type
+      );
+
+      if (!serverValidation.success) {
+        setUploadError(serverValidation.error || 'সার্ভার ভ্যালিডেশন ব্যর্থ হয়েছে।');
+        setIsUploading(false);
+        return;
+      }
+
+      // 2. Upload file & store bucket-relative path {schoolId}/notices/{timestamp}_{random}.ext
+      const uploadRes = await uploadFileToStorage({
+        file,
+        bucket: 'notice-files',
+        folder: 'notices',
+        schoolId: 'snlhs',
+      });
+
+      setAttachmentRelativePath(uploadRes.relativePath);
+      setAttachmentOriginalName(uploadRes.originalName);
+      setAttachmentFile(file);
+      setIsUploading(false);
+    } catch (err: any) {
+      setUploadError(err.message || 'ফাইল আপলোড ব্যর্থ হয়েছে।');
+      setIsUploading(false);
+    }
   };
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
     if (editingId) {
       setNotices(notices.map(n => n.id === editingId ? {
-        ...n, title, description, category, is_important: isImportant, is_published: isPublished
+        ...n,
+        title,
+        description,
+        category,
+        is_important: isImportant,
+        is_published: isPublished,
+        attachment_url: attachmentRelativePath,
+        attachment_original_name: attachmentOriginalName
       } : n));
     } else {
       setNotices([
@@ -70,6 +149,8 @@ export default function NoticeManagementPage() {
           description,
           category,
           pub_date: new Date().toISOString().split('T')[0],
+          attachment_url: attachmentRelativePath,
+          attachment_original_name: attachmentOriginalName,
           is_important: isImportant,
           is_published: isPublished,
         },
@@ -103,7 +184,7 @@ export default function NoticeManagementPage() {
             নোটিশ ব্যবস্থাপনা
           </h2>
           <p style={{ fontSize: 'var(--text-sm)', color: 'var(--neutral-600)', margin: 0 }}>
-            স্কুলের নোটিশ বোর্ড ও ফাইল আপলোড পরিচালনা করুন
+            স্কুলের নোটিশ বোর্ড ও পিডিএফ ফাইল আপলোড পরিচালনা করুন
           </p>
         </div>
 
@@ -140,61 +221,74 @@ export default function NoticeManagementPage() {
               <th>তারিখ</th>
               <th>শিরোনাম</th>
               <th>ক্যাটাগরি</th>
-              <th>গুরুত্বপূর্ণ</th>
+              <th>সংযুক্তি (Attachment)</th>
               <th>স্ট্যাটাস</th>
               <th style={{ textAlign: 'right' }}>অ্যাকশন</th>
             </tr>
           </thead>
           <tbody>
-            {filteredNotices.map((notice) => (
-              <tr key={notice.id}>
-                <td>{notice.pub_date}</td>
-                <td>
-                  <div style={{ fontWeight: 600, color: 'var(--primary-900)' }}>{notice.title}</div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--neutral-500)' }}>{notice.description}</div>
-                </td>
-                <td><span className="badge badge-academic">{notice.category}</span></td>
-                <td>
-                  {notice.is_important ? (
-                    <span className="badge badge-admission">গুরুত্বপূর্ণ</span>
-                  ) : (
-                    <span style={{ color: 'var(--neutral-400)', fontSize: 'var(--text-xs)' }}>সাধারণ</span>
-                  )}
-                </td>
-                <td>
-                  <button
-                    onClick={() => togglePublish(notice.id)}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
-                  >
-                    {notice.is_published ? (
-                      <span style={{ color: 'var(--success)', display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: 'var(--text-xs)', fontWeight: 600 }}>
-                        <CheckCircle size={16} /> প্রকাশিত
-                      </span>
+            {filteredNotices.map((notice) => {
+              const publicDownloadUrl = getStoragePublicUrl('notice-files', notice.attachment_url);
+              return (
+                <tr key={notice.id}>
+                  <td>{notice.pub_date}</td>
+                  <td>
+                    <div style={{ fontWeight: 600, color: 'var(--primary-900)' }}>{notice.title}</div>
+                    <div style={{ fontSize: 'var(--text-xs)', color: 'var(--neutral-500)' }}>{notice.description}</div>
+                  </td>
+                  <td><span className="badge badge-academic">{notice.category}</span></td>
+                  <td>
+                    {notice.attachment_url ? (
+                      <a
+                        href={publicDownloadUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="btn btn-outline btn-sm"
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: 'var(--text-xs)' }}
+                      >
+                        <FileText size={14} color="var(--primary-700)" />
+                        <span>{notice.attachment_original_name || 'ডাউনলোড PDF'}</span>
+                        <Download size={12} />
+                      </a>
                     ) : (
-                      <span style={{ color: 'var(--neutral-400)', display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: 'var(--text-xs)' }}>
-                        <XCircle size={16} /> খসড়া
-                      </span>
+                      <span style={{ fontSize: 'var(--text-xs)', color: 'var(--neutral-400)' }}>নাই</span>
                     )}
-                  </button>
-                </td>
-                <td style={{ textAlign: 'right' }}>
-                  <div style={{ display: 'inline-flex', gap: 'var(--space-2)' }}>
+                  </td>
+                  <td>
                     <button
-                      onClick={() => handleOpenModal(notice)}
-                      style={{ background: 'none', border: 'none', color: 'var(--primary-700)', cursor: 'pointer', padding: '4px' }}
+                      onClick={() => togglePublish(notice.id)}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
                     >
-                      <Edit3 size={18} />
+                      {notice.is_published ? (
+                        <span style={{ color: 'var(--success)', display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: 'var(--text-xs)', fontWeight: 600 }}>
+                          <CheckCircle size={16} /> প্রকাশিত
+                        </span>
+                      ) : (
+                        <span style={{ color: 'var(--neutral-400)', display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: 'var(--text-xs)' }}>
+                          <XCircle size={16} /> খসড়া
+                        </span>
+                      )}
                     </button>
-                    <button
-                      onClick={() => handleDelete(notice.id)}
-                      style={{ background: 'none', border: 'none', color: 'var(--error)', cursor: 'pointer', padding: '4px' }}
-                    >
-                      <Trash2 size={18} />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
+                  </td>
+                  <td style={{ textAlign: 'right' }}>
+                    <div style={{ display: 'inline-flex', gap: 'var(--space-2)' }}>
+                      <button
+                        onClick={() => handleOpenModal(notice)}
+                        style={{ background: 'none', border: 'none', color: 'var(--primary-700)', cursor: 'pointer', padding: '4px' }}
+                      >
+                        <Edit3 size={18} />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(notice.id)}
+                        style={{ background: 'none', border: 'none', color: 'var(--error)', cursor: 'pointer', padding: '4px' }}
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
@@ -243,11 +337,38 @@ export default function NoticeManagementPage() {
                 </select>
               </div>
 
+              {/* Attachment File Upload Widget */}
+              <div className="form-group">
+                <label className="form-label">পিডিএফ / ফাইল সংযুক্তি (PDF / DOCX)</label>
+                <input
+                  type="file"
+                  accept=".pdf,.docx"
+                  onChange={handleFileChange}
+                  className="form-input"
+                  style={{ padding: '8px' }}
+                />
+                {isUploading && (
+                  <p style={{ fontSize: 'var(--text-xs)', color: 'var(--primary-700)', marginTop: '4px' }}>
+                    ফাইল আপলোড হচ্ছে...
+                  </p>
+                )}
+                {uploadError && (
+                  <p style={{ fontSize: 'var(--text-xs)', color: 'var(--error)', marginTop: '4px' }}>
+                    ⚠️ {uploadError}
+                  </p>
+                )}
+                {attachmentOriginalName && !isUploading && (
+                  <p style={{ fontSize: 'var(--text-xs)', color: 'var(--success)', marginTop: '4px', fontWeight: 600 }}>
+                    ✓ সংযুক্ত ফাইল: {attachmentOriginalName}
+                  </p>
+                )}
+              </div>
+
               <div className="form-group">
                 <label className="form-label">বিস্তারিত বিবরণ</label>
                 <textarea
                   className="form-textarea"
-                  rows={4}
+                  rows={3}
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="নোটিশের বিস্তারিত অংশ এখানে লিখুন..."
@@ -261,7 +382,7 @@ export default function NoticeManagementPage() {
                     checked={isImportant}
                     onChange={(e) => setIsImportant(e.target.checked)}
                   />
-                  গুরুত্বপূর্ণ নোটিশ হিসেবে চিহ্নিত করুন
+                  গুরুত্বপূর্ণ নোটিশ
                 </label>
 
                 <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', cursor: 'pointer', fontSize: 'var(--text-sm)' }}>
@@ -284,6 +405,7 @@ export default function NoticeManagementPage() {
                 </button>
                 <button
                   type="submit"
+                  disabled={isUploading}
                   className="btn btn-primary"
                   style={{ backgroundColor: 'var(--primary-700)', color: 'var(--white)' }}
                 >
