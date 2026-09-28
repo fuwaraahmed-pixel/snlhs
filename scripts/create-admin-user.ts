@@ -27,25 +27,31 @@ async function createAdminUser() {
   }
 
   const userId = authUser?.user?.id;
-  if (!userId) {
-    console.log('Fetching existing user ID...');
-    const { data: users } = await supabase.auth.admin.listUsers();
-    const existing = users?.users.find(u => u.email === email);
-    if (!existing) {
-      throw new Error('User not found.');
-    }
-  }
 
-  // 2. Fetch default school
-  const { data: school } = await supabase
+  // 2. Fetch or create default school
+  let { data: school } = await supabase
     .from('schools')
     .select('id')
     .eq('slug', process.env.DEFAULT_SCHOOL_SLUG || 'snlhs')
-    .single();
+    .maybeSingle();
 
   if (!school) {
-    console.log('Default school not found. Please run JSON migration script first.');
-    return;
+    console.log('Default school not found in DB. Creating default school (snlhs)...');
+    const { data: newSchool, error: schoolErr } = await supabase.from('schools').insert({
+      name: 'সাহেরা নায়েব ল্যাবরেটরি হাই স্কুল',
+      slug: process.env.DEFAULT_SCHOOL_SLUG || 'snlhs',
+      primary_color: '#1b365d',
+      secondary_color: '#c59b27',
+      address: 'ঢাকা, বাংলাদেশ',
+      phone: '01531927956',
+      email: 'snlhs07@gmail.com',
+      status: 'active'
+    }).select('id').single();
+
+    if (schoolErr) {
+      throw new Error(`Failed to create default school: ${schoolErr.message}`);
+    }
+    school = newSchool;
   }
 
   // 3. Insert or update profile in public.profiles table with role = 'admin'
@@ -63,7 +69,7 @@ async function createAdminUser() {
     console.log('----------------------------------------------------');
     console.log(`LOGIN CREDENTIALS:`);
     console.log(`Email:    ${email}`);
-    console.log(`Password: ${password}`);
+    console.log(`Password: [CONFIGURED IN ENV / INITIAL SETUP]`);
     console.log('----------------------------------------------------');
   }
 }

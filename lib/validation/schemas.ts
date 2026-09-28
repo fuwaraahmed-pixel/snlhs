@@ -55,13 +55,29 @@ export const GalleryImageSchema = z.object({
   display_order: z.number().int().default(0),
 });
 
+const relativePathValidation = z.string().nullable().optional().refine(
+  (val) => !val || (!val.startsWith('http://') && !val.startsWith('https://')),
+  { message: 'শুধুমাত্র Relative Storage Path গ্রহণযোগ্য (http/https দেওয়া যাবে না)' }
+);
+
 export const SchoolSettingsSchema = z.object({
   name: z.string().min(2, 'স্কুলের নাম আবশ্যক'),
-  primary_color: z.string().default('#1b365d'),
-  secondary_color: z.string().default('#c59b27'),
+  primary_color: z.string().regex(/^#[0-9a-fA-F]{6}$/, 'সঠিক Hex কালার কোড লিখুন (যেমন: #1b365d)').optional(),
+  secondary_color: z.string().regex(/^#[0-9a-fA-F]{6}$/, 'সঠিক Hex কালার কোড লিখুন (যেমন: #c59b27)').optional(),
   address: z.string().optional(),
   phone: z.string().optional(),
-  email: z.string().email().optional().or(z.literal('')),
-  logo_url: z.string().nullable().optional(),
-  favicon_url: z.string().nullable().optional(),
+  email: z.string().email('সঠিক ইমেইল লিখুন').optional().or(z.literal('')),
+  logo_url: relativePathValidation,
+  favicon_url: relativePathValidation,
+  settings: z.object({
+    motto: z.string().optional(),
+    established: z.string().optional(),
+    principal_message: z.string().optional(),
+    stats: z.array(z.object({
+      id: z.string(),
+      label: z.string(),
+      value: z.string(),
+      suffix: z.string().optional()
+    })).optional()
+  }).optional().default({})
 });

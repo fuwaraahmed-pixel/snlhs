@@ -4,7 +4,7 @@
 -- File: supabase/schema.sql
 -- ============================================================================
 
--- 1. SCHOOLS
+-- 1. SCHOOLS TABLE
 create table if not exists public.schools (
   id uuid primary key default gen_random_uuid(),
   name text not null,
@@ -21,17 +21,17 @@ create table if not exists public.schools (
   updated_at timestamptz default now()
 );
 
--- 2. PROFILES (linked to auth.users)
+-- 2. PROFILES TABLE (linked to auth.users)
 create table if not exists public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   school_id uuid references public.schools(id) on delete cascade,
-  role text not null default 'admin', -- 'admin' | 'viewer'
+  role text not null default 'viewer', -- 'admin' | 'viewer'
   name text,
   email text,
   created_at timestamptz default now()
 );
 
--- 3. NOTICES
+-- 3. NOTICES TABLE
 create table if not exists public.notices (
   id uuid primary key default gen_random_uuid(),
   school_id uuid references public.schools(id) on delete cascade,
@@ -40,6 +40,7 @@ create table if not exists public.notices (
   category text,
   pub_date date default current_date,
   attachment_url text,
+  attachment_original_name text,
   attachment_type text,
   is_important boolean default false,
   is_published boolean default false,
@@ -48,7 +49,7 @@ create table if not exists public.notices (
   updated_at timestamptz default now()
 );
 
--- 4. TEACHERS
+-- 4. TEACHERS TABLE
 create table if not exists public.teachers (
   id uuid primary key default gen_random_uuid(),
   school_id uuid references public.schools(id) on delete cascade,
@@ -66,7 +67,7 @@ create table if not exists public.teachers (
   updated_at timestamptz default now()
 );
 
--- 5. EVENTS
+-- 5. EVENTS TABLE
 create table if not exists public.events (
   id uuid primary key default gen_random_uuid(),
   school_id uuid references public.schools(id) on delete cascade,
@@ -83,7 +84,7 @@ create table if not exists public.events (
   updated_at timestamptz default now()
 );
 
--- 6. GALLERY ALBUMS & IMAGES
+-- 6. GALLERY ALBUMS & IMAGES TABLES
 create table if not exists public.gallery_albums (
   id uuid primary key default gen_random_uuid(),
   school_id uuid references public.schools(id) on delete cascade,
@@ -104,11 +105,17 @@ create table if not exists public.gallery_images (
   created_at timestamptz default now()
 );
 
--- ----------------------------------------------------------------------------
--- RLS POLICIES IMPORT
--- ----------------------------------------------------------------------------
--- Helper function to get authenticated user's school_id
-create or replace function auth.school_id()
+-- INDEXES
+create index if not exists idx_profiles_school_id on public.profiles(school_id);
+create index if not exists idx_notices_school_id on public.notices(school_id);
+create index if not exists idx_teachers_school_id on public.teachers(school_id);
+create index if not exists idx_events_school_id on public.events(school_id);
+create index if not exists idx_gallery_albums_school_id on public.gallery_albums(school_id);
+create index if not exists idx_gallery_images_school_id on public.gallery_images(school_id);
+create index if not exists idx_gallery_images_album_id on public.gallery_images(album_id);
+
+-- RLS HELPER FUNCTIONS
+create or replace function public.current_school_id()
 returns uuid
 language sql
 stable
@@ -118,7 +125,17 @@ as $$
   select school_id from public.profiles where id = auth.uid()
 $$;
 
--- Enable RLS
+create or replace function public.current_user_role()
+returns text
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select role from public.profiles where id = auth.uid()
+$$;
+
+-- ENABLE RLS
 alter table public.profiles enable row level security;
 alter table public.schools enable row level security;
 alter table public.notices enable row level security;
@@ -127,55 +144,61 @@ alter table public.events enable row level security;
 alter table public.gallery_albums enable row level security;
 alter table public.gallery_images enable row level security;
 
--- PROFILES Policies
+-- PROFILES POLICIES
 create policy "profiles_select_own" on public.profiles
   for select using (id = auth.uid());
 
--- SCHOOLS Policies
+-- SCHOOLS POLICIES
 create policy "schools_public_select_active" on public.schools
   for select using (status = 'active');
 
-create policy "schools_owner_update" on public.schools
-  for update using (id = auth.school_id()) with check (id = auth.school_id());
+create policy "schools_admin_update" on public.schools
+  for update
+  using (id = public.current_school_id() and public.current_user_role() = 'admin')
+  with check (id = public.current_school_id() and public.current_user_role() = 'admin');
 
--- NOTICES Policies
-create policy "notices_public_select_published" on public.notices
-  for select using (is_published = true);
-
-create policy "notices_owner_all_access" on public.notices
-  for all using (school_id = auth.school_id()) with check (school_id = auth.school_id());
-
--- TEACHERS Policies
-create policy "teachers_public_select_published" on public.teachers
-  for select using (is_published = true);
-
-create policy "teachers_owner_all_access" on public.teachers
-  for all using (school_id = auth.school_id()) with check (school_id = auth.school_id());
-
--- EVENTS Policies
-create policy "events_public_select_published" on public.events
-  for select using (is_published = true);
-
-create policy "events_owner_all_access" on public.events
-  for all using (school_id = auth.school_id()) with check (school_id = auth.school_id());
-
--- GALLERY ALBUMS Policies
-create policy "gallery_albums_public_select_published" on public.gallery_albums
-  for select using (is_published = true);
-
-create policy "gallery_albums_owner_all_access" on public.gallery_albums
-  for all using (school_id = auth.school_id()) with check (school_id = auth.school_id());
-
--- GALLERY IMAGES Policies
-create policy "gallery_images_public_select_published" on public.gallery_images
+-- GALLERY IMAGES POLICIES WITH ALBUM OWNERSHIP CHECK
+create policy "gallery_images_select_staff_or_published" on public.gallery_images
   for select using (
     exists (
-      select 1
-      from public.gallery_albums
+      select 1 from public.gallery_albums
       where public.gallery_albums.id = public.gallery_images.album_id
         and public.gallery_albums.is_published = true
+    ) or
+    (auth.role() = 'authenticated' and school_id = public.current_school_id())
+  );
+
+create policy "gallery_images_admin_insert" on public.gallery_images
+  for insert with check (
+    auth.role() = 'authenticated' and
+    school_id = public.current_school_id() and
+    public.current_user_role() = 'admin' and
+    exists (
+      select 1 from public.gallery_albums a
+      where a.id = album_id
+        and a.school_id = public.current_school_id()
     )
   );
 
-create policy "gallery_images_owner_all_access" on public.gallery_images
-  for all using (school_id = auth.school_id()) with check (school_id = auth.school_id());
+create policy "gallery_images_admin_update" on public.gallery_images
+  for update using (
+    auth.role() = 'authenticated' and
+    school_id = public.current_school_id() and
+    public.current_user_role() = 'admin'
+  ) with check (
+    auth.role() = 'authenticated' and
+    school_id = public.current_school_id() and
+    public.current_user_role() = 'admin' and
+    exists (
+      select 1 from public.gallery_albums a
+      where a.id = album_id
+        and a.school_id = public.current_school_id()
+    )
+  );
+
+create policy "gallery_images_admin_delete" on public.gallery_images
+  for delete using (
+    auth.role() = 'authenticated' and
+    school_id = public.current_school_id() and
+    public.current_user_role() = 'admin'
+  );
