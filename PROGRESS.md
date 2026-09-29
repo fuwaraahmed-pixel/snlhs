@@ -11,8 +11,8 @@
   - `supabase/full_setup.sql` ফাইল তৈরি ও Supabase SQL Editor-এ সফলভাবে চালানো হয়েছে।
   - `public.current_school_id()` এবং `public.current_user_role()` RLS হেল্পার ফাংশন চালু করা হয়েছে।
   - `schools`, `profiles`, `notices`, `teachers`, `events`, `gallery_albums`, `gallery_images` টেবিলসমূহে Granular RLS Policies এবং `school_id`-এর উপর Performant Indexes যোগ করা হয়েছে।
-- **School Settings Migration**:
-  - `schools` টেবিলে `settings` JSONB কলাম যোগ করতে migration ফাইল `supabase/migrations/20260928000000_add_school_settings_jsonb.sql` তৈরি ও DB-তে প্রয়োগ করা হয়েছে।
+- **School Settings Migration & Live Execution**:
+  - `schools` টেবিলে `settings` JSONB কলাম যোগ করার পর `scripts/migrate-json-to-supabase.ts` চালিয়ে লাইভ ডাটাবেজে ১৫টি রো সফলভাবে আপডেট ও স্কুলে সেটিংস ইনসার্ট/আপডেট করা হয়েছে।
 - **Admin User & First School Setup**:
   - `scripts/create-admin-user.ts` চালানো হয়েছে; প্রথম স্কুল (`snlhs`) এবং প্রধান শিক্ষকের জন্য অ্যাডমিন প্রোফাইল তৈরি ও লিঙ্ক করা হয়েছে।
 - **Idempotent Data Import**:
@@ -78,7 +78,7 @@
 | **Phase 5** | Admin Dashboard Infrastructure | 🟡 **আংশিক** | Admin UI UI layout আছে, তবে mock state-এ রয়েছে; Gallery UI বাকি |
 | **Phase 6** | File Upload & Storage Management | ✅ **পাস** | Storage Buckets, Upload Utility & Relative pathing সম্পূর্ণ |
 | **Phase 7** | Public Portal & Dynamic Rendering | 🟡 **আংশিক** | পাব্লিক পেজগুলো বর্তমানে Static HTML/React state-এ রয়েছে |
-| **Phase 8** | Settings & Customization Engine | 🟡 **আংশিক** | `schools.settings` কলাম যুক্ত, লাইভ রান বাকি |
+| **Phase 8** | Settings & Customization Engine | ✅ **পাস** | `schools.settings` কলাম যুক্ত এবং লাইভ মাইগ্রেশন রান সফলভাবে সম্পন্ন |
 | **Phase 9** | Security, Performance & Audit | 🟡 **আংশিক** | RLS 7/7 টেস্ট পাস; অন্যান্য সিকিউরিটি অডিট বাকি |
 | **Phase 10** | Production Deployment & Launch | ❌ **বাকি** | Vercel Deployment ও Production Verification বাকি |
 
