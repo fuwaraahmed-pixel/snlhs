@@ -1,15 +1,22 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Plus, Search, Trash2, Edit3, CheckCircle, XCircle, Upload, FileText, Download } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Plus, Search, Trash2, Edit3, CheckCircle, XCircle, FileText, Download, Loader2, AlertCircle } from 'lucide-react';
 import { uploadFileToStorage } from '@/lib/storage/upload';
 import { getStoragePublicUrl } from '@/lib/storage/url-builder';
 import { validateFileUploadServerAction } from '@/lib/actions/upload-actions';
+import {
+  getAdminNotices,
+  createNoticeAction,
+  updateNoticeAction,
+  deleteNoticeAction,
+  toggleNoticePublishAction,
+} from '@/lib/actions/notices-actions';
 
 interface NoticeItem {
   id: string;
   title: string;
-  description: string;
+  description: string | null;
   category: string;
   pub_date: string;
   attachment_url: string | null;
@@ -19,9 +26,15 @@ interface NoticeItem {
 }
 
 export default function NoticeManagementPage() {
+  const [notices, setNotices] = useState<NoticeItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
+
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Form states
   const [title, setTitle] = useState('');
@@ -31,41 +44,36 @@ export default function NoticeManagementPage() {
   const [isPublished, setIsPublished] = useState(true);
 
   // Attachment file upload states
-  const [attachmentFile, setAttachmentFile] = useState<File | null>(null);
   const [attachmentRelativePath, setAttachmentRelativePath] = useState<string | null>(null);
   const [attachmentOriginalName, setAttachmentOriginalName] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
-  // Sample notices list with relative path attachment_url and attachment_original_name
-  const [notices, setNotices] = useState<NoticeItem[]>([
-    {
-      id: '1',
-      title: 'বার্ষিক ক্রীড়া প্রতিযোগিতা ২০২৬ সংক্রান্ত বিজ্ঞপ্তি',
-      description: 'আগামী ১৫ আগস্ট স্কুলে বার্ষিক ক্রীড়া প্রতিযোগিতা অনুষ্ঠিত হবে।',
-      category: 'ইভেন্ট',
-      pub_date: '2026-08-15',
-      attachment_url: 'snlhs/notices/1727440000_sports_notice.pdf',
-      attachment_original_name: 'বার্ষিক_ক্রীড়া_বিজ্ঞপ্তি.pdf',
-      is_important: true,
-      is_published: true,
-    },
-    {
-      id: '2',
-      title: 'অর্ধ-বার্ষিক পরীক্ষা ২০২৬ এর সময়সূচী',
-      description: 'অর্ধ-বার্ষিক পরীক্ষার পূর্ণাঙ্গ রুটিন প্রকাশিত হলো।',
-      category: 'পরীক্ষা',
-      pub_date: '2026-08-10',
-      attachment_url: null,
-      attachment_original_name: null,
-      is_important: false,
-      is_published: true,
-    },
-  ]);
+  const [schoolId, setSchoolId] = useState<string | null>(null);
+
+  // Load notices from Supabase
+  const loadNotices = async () => {
+    setLoading(true);
+    setErrorMsg(null);
+    const res = await getAdminNotices();
+    if (res.error) {
+      setErrorMsg(res.error);
+    } else {
+      setNotices(res.notices || []);
+      if (res.schoolId) {
+        setSchoolId(res.schoolId);
+      }
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    loadNotices();
+  }, []);
 
   const handleOpenModal = (notice?: NoticeItem) => {
     setUploadError(null);
-    setAttachmentFile(null);
+    setErrorMsg(null);
     if (notice) {
       setEditingId(notice.id);
       setTitle(notice.title);
@@ -92,11 +100,16 @@ export default function NoticeManagementPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    if (!schoolId) {
+      setUploadError('স্কুল আইডি লোড করতে ব্যর্থ হয়েছে। অনুগ্রহ করে পেজ রিফ্রেশ করুন।');
+      return;
+    }
+
     setUploadError(null);
     setIsUploading(true);
 
     try {
-      // 1. Server action double validation
+      // 1. Server action validation
       const serverValidation = await validateFileUploadServerAction(
         'notice-files',
         file.name,
@@ -115,12 +128,11 @@ export default function NoticeManagementPage() {
         file,
         bucket: 'notice-files',
         folder: 'notices',
-        schoolId: 'snlhs',
+        schoolId,
       });
 
       setAttachmentRelativePath(uploadRes.relativePath);
       setAttachmentOriginalName(uploadRes.originalName);
-      setAttachmentFile(file);
       setIsUploading(false);
     } catch (err: any) {
       setUploadError(err.message || 'ফাইল আপলোড ব্যর্থ হয়েছে।');
@@ -128,49 +140,67 @@ export default function NoticeManagementPage() {
     }
   };
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true);
+    setErrorMsg(null);
+    setSuccessMsg(null);
+
+    const payload = {
+      title,
+      description,
+      category,
+      is_important: isImportant,
+      is_published: isPublished,
+      attachment_url: attachmentRelativePath,
+      attachment_original_name: attachmentOriginalName,
+    };
+
+    let result;
     if (editingId) {
-      setNotices(notices.map(n => n.id === editingId ? {
-        ...n,
-        title,
-        description,
-        category,
-        is_important: isImportant,
-        is_published: isPublished,
-        attachment_url: attachmentRelativePath,
-        attachment_original_name: attachmentOriginalName
-      } : n));
+      result = await updateNoticeAction(editingId, payload);
     } else {
-      setNotices([
-        {
-          id: String(Date.now()),
-          title,
-          description,
-          category,
-          pub_date: new Date().toISOString().split('T')[0],
-          attachment_url: attachmentRelativePath,
-          attachment_original_name: attachmentOriginalName,
-          is_important: isImportant,
-          is_published: isPublished,
-        },
-        ...notices
-      ]);
+      result = await createNoticeAction(payload);
     }
-    setIsModalOpen(false);
-  };
 
-  const handleDelete = (id: string) => {
-    if (confirm('আপনি কি নিশ্চিত যে এই নোটিশটি মুছে ফেলতে চান?')) {
-      setNotices(notices.filter(n => n.id !== id));
+    setIsSubmitting(false);
+
+    if (result.success) {
+      setSuccessMsg(editingId ? 'নোটিশ সফলভাবে আপডেট করা হয়েছে।' : 'নতুন নোটিশ সফলভাবে প্রকাশ করা হয়েছে।');
+      setIsModalOpen(false);
+      loadNotices();
+    } else {
+      setErrorMsg(result.error || 'অপারেশন ব্যর্থ হয়েছে।');
     }
   };
 
-  const togglePublish = (id: string) => {
-    setNotices(notices.map(n => n.id === id ? { ...n, is_published: !n.is_published } : n));
+  const handleDelete = async (id: string) => {
+    if (!confirm('আপনি কি নিশ্চিত যে এই নোটিশটি মুছে ফেলতে চান?')) return;
+
+    setErrorMsg(null);
+    setSuccessMsg(null);
+    const res = await deleteNoticeAction(id);
+    if (res.success) {
+      setSuccessMsg('নোটিশ সফলভাবে মুছে ফেলা হয়েছে।');
+      loadNotices();
+    } else {
+      setErrorMsg(res.error || 'নোটিশ মুছতে ব্যর্থ হয়েছে।');
+    }
   };
 
-  const filteredNotices = notices.filter(n =>
+  const handleTogglePublish = async (id: string, currentStatus: boolean) => {
+    setErrorMsg(null);
+    setSuccessMsg(null);
+    const res = await toggleNoticePublishAction(id, currentStatus);
+    if (res.success) {
+      setSuccessMsg('নোটিশের প্রকাশনা স্থিতি পরিবর্তন করা হয়েছে।');
+      loadNotices();
+    } else {
+      setErrorMsg(res.error || 'স্থিতি পরিবর্তন করতে ব্যর্থ হয়েছে।');
+    }
+  };
+
+  const filteredNotices = notices.filter((n) =>
     n.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     n.category.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -198,6 +228,21 @@ export default function NoticeManagementPage() {
         </button>
       </div>
 
+      {/* Global Alerts */}
+      {errorMsg && (
+        <div style={{ padding: 'var(--space-3) var(--space-4)', backgroundColor: '#fde8e8', color: '#9b1c1c', borderRadius: 'var(--radius-md)', marginBottom: 'var(--space-4)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <AlertCircle size={18} />
+          <span>{errorMsg}</span>
+        </div>
+      )}
+
+      {successMsg && (
+        <div style={{ padding: 'var(--space-3) var(--space-4)', backgroundColor: '#def7ec', color: '#03543f', borderRadius: 'var(--radius-md)', marginBottom: 'var(--space-4)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <CheckCircle size={18} />
+          <span>{successMsg}</span>
+        </div>
+      )}
+
       {/* Search Bar */}
       <div className="admin-card" style={{ marginBottom: 'var(--space-6)', padding: 'var(--space-4)' }}>
         <div style={{ position: 'relative', maxWidth: '400px' }}>
@@ -213,85 +258,101 @@ export default function NoticeManagementPage() {
         </div>
       </div>
 
-      {/* Table */}
-      <div className="admin-table-wrapper">
-        <table className="admin-table">
-          <thead>
-            <tr>
-              <th>তারিখ</th>
-              <th>শিরোনাম</th>
-              <th>ক্যাটাগরি</th>
-              <th>সংযুক্তি (Attachment)</th>
-              <th>স্ট্যাটাস</th>
-              <th style={{ textAlign: 'right' }}>অ্যাকশন</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredNotices.map((notice) => {
-              const publicDownloadUrl = getStoragePublicUrl('notice-files', notice.attachment_url);
-              return (
-                <tr key={notice.id}>
-                  <td>{notice.pub_date}</td>
-                  <td>
-                    <div style={{ fontWeight: 600, color: 'var(--primary-900)' }}>{notice.title}</div>
-                    <div style={{ fontSize: 'var(--text-xs)', color: 'var(--neutral-500)' }}>{notice.description}</div>
-                  </td>
-                  <td><span className="badge badge-academic">{notice.category}</span></td>
-                  <td>
-                    {notice.attachment_url ? (
-                      <a
-                        href={publicDownloadUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="btn btn-outline btn-sm"
-                        style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: 'var(--text-xs)' }}
-                      >
-                        <FileText size={14} color="var(--primary-700)" />
-                        <span>{notice.attachment_original_name || 'ডাউনলোড PDF'}</span>
-                        <Download size={12} />
-                      </a>
-                    ) : (
-                      <span style={{ fontSize: 'var(--text-xs)', color: 'var(--neutral-400)' }}>নাই</span>
-                    )}
-                  </td>
-                  <td>
-                    <button
-                      onClick={() => togglePublish(notice.id)}
-                      style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
-                    >
-                      {notice.is_published ? (
-                        <span style={{ color: 'var(--success)', display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: 'var(--text-xs)', fontWeight: 600 }}>
-                          <CheckCircle size={16} /> প্রকাশিত
-                        </span>
-                      ) : (
-                        <span style={{ color: 'var(--neutral-400)', display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: 'var(--text-xs)' }}>
-                          <XCircle size={16} /> খসড়া
-                        </span>
+      {/* Loading & Empty States */}
+      {loading ? (
+        <div style={{ padding: 'var(--space-12)', textAlign: 'center', color: 'var(--neutral-500)' }}>
+          <Loader2 size={32} className="animate-spin" style={{ margin: '0 auto var(--space-2)' }} />
+          <p>নোটিশ তালিকা লোড হচ্ছে...</p>
+        </div>
+      ) : filteredNotices.length === 0 ? (
+        <div className="admin-card" style={{ padding: 'var(--space-12)', textAlign: 'center', color: 'var(--neutral-500)' }}>
+          <FileText size={48} style={{ margin: '0 auto var(--space-4)', opacity: 0.4 }} />
+          <h3 style={{ fontSize: 'var(--text-lg)', color: 'var(--primary-900)', marginBottom: 'var(--space-2)' }}>কোনো নোটিশ পাওয়া যায়নি</h3>
+          <p style={{ fontSize: 'var(--text-sm)', marginBottom: 'var(--space-4)' }}>নতুন নোটিশ যোগ করতে উপরের বাটনে ক্লিক করুন।</p>
+        </div>
+      ) : (
+        /* Table */
+        <div className="admin-table-wrapper">
+          <table className="admin-table">
+            <thead>
+              <tr>
+                <th>তারিখ</th>
+                <th>শিরোনাম</th>
+                <th>ক্যাটাগরি</th>
+                <th>সংযুক্তি (Attachment)</th>
+                <th>স্ট্যাটাস</th>
+                <th style={{ textAlign: 'right' }}>অ্যাকশন</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredNotices.map((notice) => {
+                const publicDownloadUrl = getStoragePublicUrl('notice-files', notice.attachment_url);
+                return (
+                  <tr key={notice.id}>
+                    <td>{notice.pub_date}</td>
+                    <td>
+                      <div style={{ fontWeight: 600, color: 'var(--primary-900)' }}>{notice.title}</div>
+                      {notice.description && (
+                        <div style={{ fontSize: 'var(--text-xs)', color: 'var(--neutral-500)' }}>{notice.description}</div>
                       )}
-                    </button>
-                  </td>
-                  <td style={{ textAlign: 'right' }}>
-                    <div style={{ display: 'inline-flex', gap: 'var(--space-2)' }}>
+                    </td>
+                    <td><span className="badge badge-academic">{notice.category}</span></td>
+                    <td>
+                      {notice.attachment_url ? (
+                        <a
+                          href={publicDownloadUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="btn btn-outline btn-sm"
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: 'var(--text-xs)' }}
+                        >
+                          <FileText size={14} color="var(--primary-700)" />
+                          <span>{notice.attachment_original_name || 'ডাউনলোড PDF'}</span>
+                          <Download size={12} />
+                        </a>
+                      ) : (
+                        <span style={{ fontSize: 'var(--text-xs)', color: 'var(--neutral-400)' }}>নাই</span>
+                      )}
+                    </td>
+                    <td>
                       <button
-                        onClick={() => handleOpenModal(notice)}
-                        style={{ background: 'none', border: 'none', color: 'var(--primary-700)', cursor: 'pointer', padding: '4px' }}
+                        onClick={() => handleTogglePublish(notice.id, notice.is_published)}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
                       >
-                        <Edit3 size={18} />
+                        {notice.is_published ? (
+                          <span style={{ color: 'var(--success)', display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: 'var(--text-xs)', fontWeight: 600 }}>
+                            <CheckCircle size={16} /> প্রকাশিত
+                          </span>
+                        ) : (
+                          <span style={{ color: 'var(--neutral-400)', display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: 'var(--text-xs)' }}>
+                            <XCircle size={16} /> খসড়া
+                          </span>
+                        )}
                       </button>
-                      <button
-                        onClick={() => handleDelete(notice.id)}
-                        style={{ background: 'none', border: 'none', color: 'var(--error)', cursor: 'pointer', padding: '4px' }}
-                      >
-                        <Trash2 size={18} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+                    </td>
+                    <td style={{ textAlign: 'right' }}>
+                      <div style={{ display: 'inline-flex', gap: 'var(--space-2)' }}>
+                        <button
+                          onClick={() => handleOpenModal(notice)}
+                          style={{ background: 'none', border: 'none', color: 'var(--primary-700)', cursor: 'pointer', padding: '4px' }}
+                        >
+                          <Edit3 size={18} />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(notice.id)}
+                          style={{ background: 'none', border: 'none', color: 'var(--error)', cursor: 'pointer', padding: '4px' }}
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {/* Modal Form */}
       {isModalOpen && (
@@ -319,7 +380,7 @@ export default function NoticeManagementPage() {
                   className="form-input"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  placeholder="যেমন: অর্ধ-বার্ষিক পরীক্ষা ২০২৬ এর সময়সূচী"
+                  placeholder="যেমন: অর্ধ-バー্ষিক পরীক্ষা ২০২৬ এর সময়সূচী"
                 />
               </div>
 
@@ -405,11 +466,12 @@ export default function NoticeManagementPage() {
                 </button>
                 <button
                   type="submit"
-                  disabled={isUploading}
+                  disabled={isUploading || isSubmitting}
                   className="btn btn-primary"
-                  style={{ backgroundColor: 'var(--primary-700)', color: 'var(--white)' }}
+                  style={{ backgroundColor: 'var(--primary-700)', color: 'var(--white)', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                 >
-                  সংরক্ষণ করুন
+                  {isSubmitting && <Loader2 size={16} className="animate-spin" />}
+                  <span>সংরক্ষণ করুন</span>
                 </button>
               </div>
             </form>

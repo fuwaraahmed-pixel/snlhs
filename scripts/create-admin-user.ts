@@ -3,13 +3,19 @@ import { createAdminClient } from '../lib/db/supabase-admin';
 async function createAdminUser() {
   const supabase = createAdminClient();
 
-  const email = process.env.INITIAL_ADMIN_EMAIL || 'admin@school.edu.bd';
-  const password = process.env.INITIAL_ADMIN_PASSWORD || 'SchoolAdmin#2026';
+  const email = process.env.INITIAL_ADMIN_EMAIL;
+  const password = process.env.INITIAL_ADMIN_PASSWORD;
   const fullName = 'নূর মোহাম্মদ সরকার (প্রধান শিক্ষক)';
 
-  console.log(`Creating Admin User in Supabase Auth: ${email}`);
+  if (!email || !password) {
+    throw new Error('INITIAL_ADMIN_EMAIL এবং INITIAL_ADMIN_PASSWORD .env.local-এ কনফিগার করা নেই!');
+  }
 
-  // 1. Create auth user via Supabase Admin Auth API
+  console.log(`Creating/Updating Admin User in Supabase Auth: ${email}`);
+
+  // 1. Create or update auth user via Supabase Admin Auth API
+  let userId: string | undefined;
+
   const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
     email,
     password,
@@ -19,58 +25,60 @@ async function createAdminUser() {
 
   if (authError) {
     if (authError.message.includes('already registered')) {
-      console.log(`User ${email} already exists.`);
+      console.log(`User ${email} already exists in Auth. Fetching user ID & updating password...`);
+      const { data: users } = await supabase.auth.admin.listUsers();
+      const existing = users?.users.find(u => u.email === email);
+      userId = existing?.id;
+
+      if (userId) {
+        // Update password for existing user if already present
+        await supabase.auth.admin.updateUserById(userId, { password, email_confirm: true });
+      }
     } else {
       console.error('Error creating auth user:', authError);
       return;
     }
+  } else {
+    userId = authUser?.user?.id;
   }
 
-  const userId = authUser?.user?.id;
-
-  // 2. Fetch or create default school
-  let { data: school } = await supabase
+  // 2. Fetch existing default school (snlhs)
+  const { data: school, error: schoolErr } = await supabase
     .from('schools')
     .select('id')
     .eq('slug', process.env.DEFAULT_SCHOOL_SLUG || 'snlhs')
-    .maybeSingle();
+    .single();
 
-  if (!school) {
-    console.log('Default school not found in DB. Creating default school (snlhs)...');
-    const { data: newSchool, error: schoolErr } = await supabase.from('schools').insert({
-      name: 'সাহেরা নায়েব ল্যাবরেটরি হাই স্কুল',
-      slug: process.env.DEFAULT_SCHOOL_SLUG || 'snlhs',
-      primary_color: '#1b365d',
-      secondary_color: '#c59b27',
-      address: 'ঢাকা, বাংলাদেশ',
-      phone: '01531927956',
-      email: 'snlhs07@gmail.com',
-      status: 'active'
-    }).select('id').single();
-
-    if (schoolErr) {
-      throw new Error(`Failed to create default school: ${schoolErr.message}`);
-    }
-    school = newSchool;
+  if (schoolErr || !school) {
+    throw new Error('Default school (snlhs) not found in DB.');
   }
 
-  // 3. Insert or update profile in public.profiles table with role = 'admin'
-  const finalUserId = userId || (await supabase.auth.admin.listUsers()).data.users.find(u => u.email === email)?.id;
-
-  if (finalUserId) {
+  // 3. Upsert admin profile
+  if (userId) {
     await supabase.from('profiles').upsert({
-      id: finalUserId,
+      id: userId,
       school_id: school.id,
       role: 'admin',
       name: fullName,
       email
     });
     console.log(`Successfully assigned Admin Profile for ${email} with School ID ${school.id}!`);
-    console.log('----------------------------------------------------');
-    console.log(`LOGIN CREDENTIALS:`);
-    console.log(`Email:    ${email}`);
-    console.log(`Password: [CONFIGURED IN ENV / INITIAL SETUP]`);
-    console.log('----------------------------------------------------');
+
+    // 4. Option B: Delete old admin user (admin@school.edu.bd) after successful creation
+    console.log('Cleaning up old compromised admin user (admin@school.edu.bd)...');
+    const { data: allUsers } = await supabase.auth.admin.listUsers();
+    const oldUser = allUsers?.users.find(u => u.email === 'admin@school.edu.bd');
+
+    if (oldUser) {
+      const { error: deleteErr } = await supabase.auth.admin.deleteUser(oldUser.id);
+      if (deleteErr) {
+        console.error(`Failed to delete old user: ${deleteErr.message}`);
+      } else {
+        console.log('Old user (admin@school.edu.bd) successfully deleted from Supabase Auth & Profiles.');
+      }
+    } else {
+      console.log('Old user (admin@school.edu.bd) not found or already deleted.');
+    }
   }
 }
 

@@ -18,19 +18,6 @@ export default function AdminLoginPage() {
     setErrorMsg(null);
     setIsLoading(true);
 
-    // Set test auth cookie
-    document.cookie = 'admin_test_session=true; path=/';
-
-    // 1. Local test bypass for instant UI evaluation
-    if (email === 'admin@school.edu.bd' && password === 'SchoolAdmin#2026') {
-      setTimeout(() => {
-        router.push('/admin/dashboard');
-        router.refresh();
-      }, 300);
-      return;
-    }
-
-    // 2. Real Supabase Auth login
     try {
       const supabase = createClient();
       const { error } = await supabase.auth.signInWithPassword({
@@ -39,17 +26,16 @@ export default function AdminLoginPage() {
       });
 
       if (error) {
-        // Still allow fallback redirect in local test mode
-        router.push('/admin/dashboard');
-        router.refresh();
+        setErrorMsg('ইমেইল বা পাসওয়ার্ড ভুল হয়েছে। সঠিক তথ্য প্রদান করুন।');
         return;
       }
 
       router.push('/admin/dashboard');
       router.refresh();
     } catch (err: any) {
-      router.push('/admin/dashboard');
-      router.refresh();
+      setErrorMsg('সার্ভারে যোগাযোগ করতে সমস্যা হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -122,7 +108,7 @@ export default function AdminLoginPage() {
                 type="email"
                 required
                 className="form-input"
-                placeholder="admin@school.edu.bd"
+                placeholder="snlhs07@gmail.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 style={{ paddingLeft: '40px' }}
