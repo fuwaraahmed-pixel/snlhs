@@ -29,9 +29,9 @@ export default function PublicHomePage() {
           </div>
           <nav style={{ display: 'flex', gap: 'var(--space-6)', fontWeight: 600 }}>
             <Link href="/" style={{ color: 'var(--primary-700)' }}>মূল পাতা</Link>
-            <Link href="/admin/notices" style={{ color: 'var(--neutral-700)' }}>নোটিশ বোর্ড</Link>
-            <Link href="/admin/teachers" style={{ color: 'var(--neutral-700)' }}>শিক্ষকমণ্ডলী</Link>
-            <Link href="/admin/events" style={{ color: 'var(--neutral-700)' }}>ইভেন্ট ও গ্যালারি</Link>
+            <Link href="/notices" style={{ color: 'var(--neutral-700)' }}>নোটিশ বোর্ড</Link>
+            <Link href="/teachers" style={{ color: 'var(--neutral-700)' }}>শিক্ষকমণ্ডলী</Link>
+            <Link href="/events" style={{ color: 'var(--neutral-700)' }}>ইভেন্ট ও গ্যালারি</Link>
             <Link href="/admin/login" className="btn btn-outline btn-sm">অ্যাডমিন প্যানেল</Link>
           </nav>
         </div>
@@ -61,7 +61,7 @@ export default function PublicHomePage() {
             <h3 style={{ fontSize: 'var(--text-2xl)', color: 'var(--primary-900)' }}>
               📢 সাম্প্রতিক নোটিশ সমুহ
             </h3>
-            <Link href="/admin/notices" style={{ color: 'var(--primary-700)', fontWeight: 600 }}>সব নোটিশ দেখুন &rarr;</Link>
+            <Link href="/notices" style={{ color: 'var(--primary-700)', fontWeight: 600 }}>সব নোটিশ দেখুন &rarr;</Link>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 'var(--space-6)' }}>

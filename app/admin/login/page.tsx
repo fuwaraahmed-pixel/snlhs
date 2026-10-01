@@ -30,8 +30,8 @@ export default function AdminLoginPage() {
         return;
       }
 
-      router.push('/admin/dashboard');
-      router.refresh();
+      // Force full window reload navigation so browser cookies & Supabase SSR middleware sync seamlessly
+      window.location.href = '/admin/dashboard';
     } catch (err: any) {
       setErrorMsg('সার্ভারে যোগাযোগ করতে সমস্যা হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।');
     } finally {
