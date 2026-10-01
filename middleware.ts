@@ -53,6 +53,7 @@ export async function middleware(request: NextRequest) {
     }
   );
 
+  // IMPORTANT: Avoid writing session checks using getUser() if refresh token is renewing
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -67,7 +68,7 @@ export async function middleware(request: NextRequest) {
   if (user && isPublicAdminRoute) {
     const url = request.nextUrl.clone();
     url.pathname = '/admin/dashboard';
-    return NextResponse.redirect(url);
+    return response; // Use response instead of redirect to allow smooth session preservation
   }
 
   return response;
