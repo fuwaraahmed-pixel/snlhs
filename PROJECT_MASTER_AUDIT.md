@@ -13,7 +13,7 @@
 | **Phase 2** | Database Schema & Granular RLS Security | ✅ **১০০% সম্পন্ন** | 7 Core Tables (`schools`, `profiles`, `notices`, `teachers`, `events`, `gallery_albums`, `gallery_images`), SQL Schema, Indexes, RLS Policies |
 | **Phase 3** | Authentication & Session Middleware Guard | ✅ **১০০% সম্পন্ন** | `@supabase/ssr` দিয়ে `/admin/login`, Cookie Handling, `middleware.ts` দিয়ে `/admin/:path*` রুট সুরক্ষিতকরণ |
 | **Phase 4** | Multi-Tenant Data Isolation & Security Test | ✅ **১০০% সম্পন্ন** | `public.current_school_id()`, `public.current_user_role()` RLS হেল্পার; 7/7 RLS Security Tests Passed |
-| **Phase 5** | Admin Dashboard Infrastructure & Management | 🟡 **৫০% সম্পন্ন** | Admin Login, Notices (Server Actions + `revalidatePath`) সম্পন্ন; Teachers, Events, Settings & Gallery-তে Server Actions যুক্ত করা বাকি |
+| **Phase 5** | Admin Dashboard Infrastructure & Management | 🟢 **৮০% সম্পন্ন** | Admin Login, Notices, Teachers & Events (Server Actions + `revalidatePath`) সম্পূর্ণ; Settings & Gallery-তে Server Actions যুক্ত করা বাকি |
 | **Phase 6** | File Upload & Storage Bucket Management | ✅ **১০০% সম্পন্ন** | Supabase Storage Buckets (`teacher-images`, `gallery-images`, `notice-attachments`), Upload Utility & relative pathing |
 | **Phase 7** | Public Website & Dynamic Routes | 🟡 **৪০% সম্পন্ন** | Public navigation redirect fix, Public Server Components (`/notices`, `/teachers`, `/events`) লিঙ্কড; বাকী পাবলিক পেজ (`/about`, `/academics`, `/admission`, `/contact`, `/gallery`) এবং ফাইনাল রেসপন্সিভ রিচ UI বাকি |
 | **Phase 8** | School Settings & JSONB Migration | ✅ **১০০% সম্পন্ন** | `schools.settings` JSONB সেলফ-কনফিগারেশন, `scripts/migrate-json-to-supabase.ts` চালনা করে লাইভ DB ডাটা সিঙ্ক |
