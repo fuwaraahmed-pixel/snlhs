@@ -103,6 +103,7 @@ export async function createNoticeAction(formData: {
 
     revalidatePath('/admin/notices');
     revalidatePath('/notices');
+    revalidatePath('/');
 
     return { success: true, data };
   } catch (err: any) {
@@ -165,6 +166,7 @@ export async function updateNoticeAction(
 
     revalidatePath('/admin/notices');
     revalidatePath('/notices');
+    revalidatePath('/');
 
     return { success: true, data };
   } catch (err: any) {
@@ -197,6 +199,7 @@ export async function deleteNoticeAction(id: string): Promise<NoticeActionState>
 
     revalidatePath('/admin/notices');
     revalidatePath('/notices');
+    revalidatePath('/');
 
     return { success: true };
   } catch (err: any) {
@@ -232,6 +235,7 @@ export async function toggleNoticePublishAction(id: string, currentStatus: boole
 
     revalidatePath('/admin/notices');
     revalidatePath('/notices');
+    revalidatePath('/');
 
     return { success: true, data };
   } catch (err: any) {

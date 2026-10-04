@@ -105,6 +105,7 @@ export async function createEventAction(formData: {
 
     revalidatePath('/admin/events');
     revalidatePath('/events');
+    revalidatePath('/');
 
     return { success: true, data };
   } catch (err: any) {
@@ -169,6 +170,7 @@ export async function updateEventAction(
 
     revalidatePath('/admin/events');
     revalidatePath('/events');
+    revalidatePath('/');
 
     return { success: true, data };
   } catch (err: any) {
@@ -201,6 +203,7 @@ export async function deleteEventAction(id: string): Promise<EventActionState> {
 
     revalidatePath('/admin/events');
     revalidatePath('/events');
+    revalidatePath('/');
 
     return { success: true };
   } catch (err: any) {
@@ -236,6 +239,7 @@ export async function toggleEventPublishAction(id: string, currentStatus: boolea
 
     revalidatePath('/admin/events');
     revalidatePath('/events');
+    revalidatePath('/');
 
     return { success: true, data };
   } catch (err: any) {

@@ -108,6 +108,7 @@ export async function createTeacherAction(formData: {
 
     revalidatePath('/admin/teachers');
     revalidatePath('/teachers');
+    revalidatePath('/');
 
     return { success: true, data };
   } catch (err: any) {
@@ -174,6 +175,7 @@ export async function updateTeacherAction(
 
     revalidatePath('/admin/teachers');
     revalidatePath('/teachers');
+    revalidatePath('/');
 
     return { success: true, data };
   } catch (err: any) {
@@ -206,6 +208,7 @@ export async function deleteTeacherAction(id: string): Promise<TeacherActionStat
 
     revalidatePath('/admin/teachers');
     revalidatePath('/teachers');
+    revalidatePath('/');
 
     return { success: true };
   } catch (err: any) {
@@ -241,6 +244,7 @@ export async function toggleTeacherPublishAction(id: string, currentStatus: bool
 
     revalidatePath('/admin/teachers');
     revalidatePath('/teachers');
+    revalidatePath('/');
 
     return { success: true, data };
   } catch (err: any) {
