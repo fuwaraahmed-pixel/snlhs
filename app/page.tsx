@@ -74,11 +74,16 @@ export default async function PublicHomePage() {
               {schoolInfo.motto}
             </p>
           </div>
-          <nav style={{ display: 'flex', gap: 'var(--space-6)', fontWeight: 600 }}>
+          <nav style={{ display: 'flex', gap: 'var(--space-4)', fontWeight: 600, flexWrap: 'wrap' }}>
             <Link href="/" style={{ color: 'var(--primary-700)' }}>মূল পাতা</Link>
+            <Link href="/about" style={{ color: 'var(--neutral-700)' }}>আমাদের কথা</Link>
+            <Link href="/academics" style={{ color: 'var(--neutral-700)' }}>একাডেমিক</Link>
+            <Link href="/admission" style={{ color: 'var(--neutral-700)' }}>ভর্তি তথ্য</Link>
             <Link href="/notices" style={{ color: 'var(--neutral-700)' }}>নোটিশ বোর্ড</Link>
             <Link href="/teachers" style={{ color: 'var(--neutral-700)' }}>শিক্ষকমণ্ডলী</Link>
-            <Link href="/events" style={{ color: 'var(--neutral-700)' }}>ইভেন্ট ও গ্যালারি</Link>
+            <Link href="/events" style={{ color: 'var(--neutral-700)' }}>ইভেন্ট</Link>
+            <Link href="/gallery" style={{ color: 'var(--neutral-700)' }}>গ্যালারি</Link>
+            <Link href="/contact" style={{ color: 'var(--neutral-700)' }}>যোগাযোগ</Link>
             <Link href="/admin/login" className="btn btn-outline btn-sm">অ্যাডমিন প্যানেল</Link>
           </nav>
         </div>
@@ -93,9 +98,12 @@ export default async function PublicHomePage() {
           <p style={{ fontSize: 'var(--text-lg)', color: 'var(--neutral-200)', maxWidth: '700px', margin: '0 auto var(--space-8)' }}>
             একটি সুশৃঙ্খল, আধুনিক ও গুণগত মানসম্পন্ন শিক্ষা প্রতিষ্ঠান।
           </p>
-          <div style={{ display: 'flex', gap: 'var(--space-4)', justifyContent: 'center' }}>
-            <Link href="/admin/login" className="btn btn-primary" style={{ backgroundColor: 'var(--accent-gold)', borderColor: 'var(--accent-gold)', color: 'var(--primary-900)', fontWeight: 700 }}>
-              অ্যাডমিন ড্যাশবোর্ডে যান
+          <div style={{ display: 'flex', gap: 'var(--space-4)', justifyContent: 'center', flexWrap: 'wrap' }}>
+            <Link href="/about" className="btn btn-primary" style={{ backgroundColor: 'var(--accent-gold)', borderColor: 'var(--accent-gold)', color: 'var(--primary-900)', fontWeight: 700 }}>
+              আমাদের সম্পর্কে জানুন
+            </Link>
+            <Link href="/admission" className="btn btn-outline" style={{ borderColor: 'var(--white)', color: 'var(--white)', fontWeight: 700 }}>
+              ভর্তি তথ্য দেখুন
             </Link>
           </div>
         </div>

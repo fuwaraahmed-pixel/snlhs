@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { Plus, Search, Trash2, Edit3, MapPin, Eye, EyeOff, Loader2 } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Plus, Search, Trash2, Edit3, MapPin, Eye, EyeOff, Loader2, ImagePlus, X } from 'lucide-react';
 import {
   getAdminEvents,
   createEventAction,
@@ -9,6 +9,7 @@ import {
   deleteEventAction,
   toggleEventPublishAction,
 } from '@/lib/actions/events-actions';
+import { uploadEventImageAction } from '@/lib/actions/upload-actions';
 
 export default function EventsManagementPage() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -22,6 +23,10 @@ export default function EventsManagementPage() {
   const [eventDate, setEventDate] = useState('');
   const [location, setLocation] = useState('স্কুল প্রাঙ্গণ');
   const [description, setDescription] = useState('');
+  const [featuredImage, setFeaturedImage] = useState<string | null>(null);
+  const [imageUploading, setImageUploading] = useState(false);
+  const [imageUploadError, setImageUploadError] = useState<string | null>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
   const [isPublished, setIsPublished] = useState(true);
 
   const [events, setEvents] = useState<any[]>([]);
@@ -44,12 +49,14 @@ export default function EventsManagementPage() {
 
   const handleOpenModal = (event?: any) => {
     setActionError(null);
+    setImageUploadError(null);
     if (event) {
       setEditingId(event.id);
       setTitle(event.title || '');
       setEventDate(event.event_date || '');
       setLocation(event.location || 'স্কুল প্রাঙ্গণ');
       setDescription(event.description || '');
+      setFeaturedImage(event.featured_image || null);
       setIsPublished(event.is_published ?? true);
     } else {
       setEditingId(null);
@@ -57,9 +64,27 @@ export default function EventsManagementPage() {
       setEventDate('');
       setLocation('স্কুল প্রাঙ্গণ');
       setDescription('');
+      setFeaturedImage(null);
       setIsPublished(true);
     }
     setIsModalOpen(true);
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImageUploading(true);
+    setImageUploadError(null);
+    const fd = new FormData();
+    fd.append('file', file);
+    const res = await uploadEventImageAction(fd);
+    if (res.success && res.publicUrl) {
+      setFeaturedImage(res.publicUrl);
+    } else {
+      setImageUploadError(res.error || 'ছবি আপলোড করতে ব্যর্থ হয়েছে');
+    }
+    setImageUploading(false);
+    if (imageInputRef.current) imageInputRef.current.value = '';
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -72,6 +97,7 @@ export default function EventsManagementPage() {
       event_date: eventDate,
       location,
       description,
+      featured_image: featuredImage,
       is_published: isPublished,
     };
 
@@ -191,8 +217,16 @@ export default function EventsManagementPage() {
                     <span style={{ fontSize: 'var(--text-xs)', fontWeight: 600, color: 'var(--primary-700)' }}>{ev.event_date}</span>
                   </td>
                   <td>
-                    <div style={{ fontWeight: 600, color: 'var(--primary-900)' }}>{ev.title}</div>
-                    {ev.description && <div style={{ fontSize: 'var(--text-xs)', color: 'var(--neutral-500)' }}>{ev.description}</div>}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+                      {ev.featured_image && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={ev.featured_image} alt={ev.title} style={{ width: '48px', height: '36px', objectFit: 'cover', borderRadius: 'var(--radius-sm)', flexShrink: 0 }} />
+                      )}
+                      <div>
+                        <div style={{ fontWeight: 600, color: 'var(--primary-900)' }}>{ev.title}</div>
+                        {ev.description && <div style={{ fontSize: 'var(--text-xs)', color: 'var(--neutral-500)' }}>{ev.description.substring(0, 60)}{ev.description.length > 60 ? '...' : ''}</div>}
+                      </div>
+                    </div>
                   </td>
                   <td>
                     <span style={{ fontSize: 'var(--text-xs)', color: 'var(--neutral-600)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
@@ -243,6 +277,35 @@ export default function EventsManagementPage() {
             </h3>
 
             <form onSubmit={handleSave}>
+              {/* Image Upload */}
+              <div className="form-group">
+                <label className="form-label">ইভেন্টের ছবি (থাম্বনেইল)</label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-4)' }}>
+                  <div style={{ width: '100px', height: '70px', borderRadius: 'var(--radius-md)', overflow: 'hidden', backgroundColor: 'var(--neutral-100)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--neutral-200)' }}>
+                    {imageUploading ? (
+                      <Loader2 size={20} className="animate-spin" color="var(--primary-500)" />
+                    ) : featuredImage ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={featuredImage} alt="event" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    ) : (
+                      <ImagePlus size={24} color="var(--neutral-400)" />
+                    )}
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <input ref={imageInputRef} type="file" accept="image/jpeg,image/png,image/webp" style={{ display: 'none' }} onChange={handleImageUpload} id="event-image-upload" />
+                    <label htmlFor="event-image-upload" style={{ display: 'inline-flex', alignItems: 'center', gap: 'var(--space-2)', padding: 'var(--space-2) var(--space-3)', backgroundColor: 'var(--white)', border: '1px solid var(--neutral-300)', borderRadius: 'var(--radius-md)', cursor: imageUploading ? 'not-allowed' : 'pointer', fontSize: 'var(--text-sm)', fontWeight: 600, color: 'var(--primary-700)' }}>
+                      <ImagePlus size={14} />
+                      <span>{imageUploading ? 'আপলোড হচ্ছে...' : featuredImage ? 'ছবি পরিবর্তন' : 'ছবি আপলোড করুন'}</span>
+                    </label>
+                    {featuredImage && !imageUploading && (
+                      <button type="button" onClick={() => setFeaturedImage(null)} style={{ display: 'block', marginTop: '4px', background: 'none', border: 'none', color: 'var(--error)', cursor: 'pointer', fontSize: 'var(--text-xs)' }}>ছবি সরিয়ে দিন</button>
+                    )}
+                    {imageUploadError && <p style={{ fontSize: 'var(--text-xs)', color: '#dc2626', marginTop: '4px' }}>⚠️ {imageUploadError}</p>}
+                    <p style={{ fontSize: 'var(--text-xs)', color: 'var(--neutral-500)', marginTop: '4px' }}>JPG, PNG বা WebP। সর্বোচ্চ ১০MB।</p>
+                  </div>
+                </div>
+              </div>
+
               <div className="form-group">
                 <label className="form-label">ইভেন্টের শিরোনাম *</label>
                 <input type="text" required className="form-input" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="যেমন: বিজ্ঞান মেলা ২০২৬" />
@@ -276,8 +339,8 @@ export default function EventsManagementPage() {
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 'var(--space-3)', marginTop: 'var(--space-6)' }}>
-                <button type="button" onClick={() => setIsModalOpen(false)} className="btn btn-outline" disabled={submitting}>বাতিল</button>
-                <button type="submit" className="btn btn-primary" style={{ backgroundColor: 'var(--primary-700)', color: 'var(--white)' }} disabled={submitting}>
+                <button type="button" onClick={() => setIsModalOpen(false)} className="btn btn-outline" disabled={submitting || imageUploading}>বাতিল</button>
+                <button type="submit" className="btn btn-primary" style={{ backgroundColor: 'var(--primary-700)', color: 'var(--white)' }} disabled={submitting || imageUploading}>
                   {submitting ? 'সংরক্ষণ হচ্ছে...' : 'সংরক্ষণ'}
                 </button>
               </div>

@@ -1059,5 +1059,13 @@ textarea.form-control {
   flex-shrink: 0;
 }
 
+/* ─── Gallery Album Card Hover ─── */
+.gallery-album-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  cursor: default;
+}
 
-
+.gallery-album-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12) !important;
+}

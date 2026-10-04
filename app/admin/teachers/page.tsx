@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { Plus, Search, Trash2, Edit3, Eye, EyeOff, Loader2 } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Plus, Search, Trash2, Edit3, Eye, EyeOff, Loader2, Camera, X } from 'lucide-react';
 import {
   getAdminTeachers,
   createTeacherAction,
@@ -9,6 +9,7 @@ import {
   deleteTeacherAction,
   toggleTeacherPublishAction,
 } from '@/lib/actions/teachers-actions';
+import { uploadTeacherPhotoAction } from '@/lib/actions/upload-actions';
 
 export default function TeacherManagementPage() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -17,6 +18,9 @@ export default function TeacherManagementPage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [photoUploading, setPhotoUploading] = useState(false);
+  const [photoUploadError, setPhotoUploadError] = useState<string | null>(null);
+  const photoInputRef = useRef<HTMLInputElement>(null);
 
   const [name, setName] = useState('');
   const [designation, setDesignation] = useState('');
@@ -24,6 +28,8 @@ export default function TeacherManagementPage() {
   const [department, setDepartment] = useState('সাধারণ');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+  const [biography, setBiography] = useState('');
   const [isPublished, setIsPublished] = useState(true);
 
   const [teachers, setTeachers] = useState<any[]>([]);
@@ -46,6 +52,7 @@ export default function TeacherManagementPage() {
 
   const handleOpenModal = (teacher?: any) => {
     setActionError(null);
+    setPhotoUploadError(null);
     if (teacher) {
       setEditingId(teacher.id);
       setName(teacher.name || '');
@@ -54,6 +61,8 @@ export default function TeacherManagementPage() {
       setDepartment(teacher.department || 'সাধারণ');
       setPhone(teacher.phone || '');
       setEmail(teacher.email || '');
+      setPhotoUrl(teacher.photo_url || null);
+      setBiography(teacher.biography || '');
       setIsPublished(teacher.is_published ?? true);
     } else {
       setEditingId(null);
@@ -63,9 +72,33 @@ export default function TeacherManagementPage() {
       setDepartment('সাধারণ');
       setPhone('');
       setEmail('');
+      setPhotoUrl(null);
+      setBiography('');
       setIsPublished(true);
     }
     setIsModalOpen(true);
+  };
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setPhotoUploading(true);
+    setPhotoUploadError(null);
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const res = await uploadTeacherPhotoAction(formData);
+    if (res.success && res.publicUrl) {
+      setPhotoUrl(res.publicUrl);
+    } else {
+      setPhotoUploadError(res.error || 'ছবি আপলোড করতে ব্যর্থ হয়েছে');
+    }
+    setPhotoUploading(false);
+
+    // Reset input so same file can be re-selected if needed
+    if (photoInputRef.current) photoInputRef.current.value = '';
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -80,6 +113,8 @@ export default function TeacherManagementPage() {
       department,
       phone,
       email,
+      photo_url: photoUrl,
+      biography,
       is_published: isPublished,
     };
 
@@ -191,15 +226,28 @@ export default function TeacherManagementPage() {
             ) : filteredTeachers.length === 0 ? (
               <tr>
                 <td colSpan={6} style={{ textAlign: 'center', padding: 'var(--space-8)', color: 'var(--neutral-600)' }}>
-                  কোনো শিক্ষক তথ্য পাওয়া যায়নি।
+                  কোনো শিক্ষক তথ্য পাওয়া যায়নি।
                 </td>
               </tr>
             ) : (
               filteredTeachers.map((t) => (
                 <tr key={t.id}>
                   <td>
-                    <div style={{ fontWeight: 600, color: 'var(--primary-900)' }}>{t.name}</div>
-                    {t.subject && <div style={{ fontSize: 'var(--text-xs)', color: 'var(--neutral-500)' }}>বিষয়: {t.subject}</div>}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+                      {/* Photo thumbnail in table */}
+                      <div style={{ width: '40px', height: '40px', borderRadius: '50%', overflow: 'hidden', backgroundColor: 'var(--primary-100)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        {t.photo_url ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={t.photo_url} alt={t.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        ) : (
+                          <span style={{ fontSize: '18px' }}>👤</span>
+                        )}
+                      </div>
+                      <div>
+                        <div style={{ fontWeight: 600, color: 'var(--primary-900)' }}>{t.name}</div>
+                        {t.subject && <div style={{ fontSize: 'var(--text-xs)', color: 'var(--neutral-500)' }}>বিষয়: {t.subject}</div>}
+                      </div>
+                    </div>
                   </td>
                   <td><span style={{ fontSize: 'var(--text-xs)', color: 'var(--accent-gold-hover)', fontWeight: 600 }}>{t.designation}</span></td>
                   <td><span className="badge badge-academic">{t.department || 'সাধারণ'}</span></td>
@@ -211,15 +259,9 @@ export default function TeacherManagementPage() {
                     <button
                       onClick={() => handleTogglePublish(t.id, t.is_published)}
                       style={{
-                        background: 'none',
-                        border: 'none',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '4px',
-                        color: t.is_published ? 'var(--success)' : 'var(--neutral-400)',
-                        fontSize: 'var(--text-xs)',
-                        fontWeight: 600,
+                        background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center',
+                        gap: '4px', color: t.is_published ? 'var(--success)' : 'var(--neutral-400)',
+                        fontSize: 'var(--text-xs)', fontWeight: 600,
                       }}
                     >
                       {t.is_published ? <Eye size={16} /> : <EyeOff size={16} />}
@@ -243,59 +285,154 @@ export default function TeacherManagementPage() {
         </table>
       </div>
 
+      {/* Add/Edit Modal */}
       {isModalOpen && (
         <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: 'var(--space-4)' }}>
-          <div className="admin-card" style={{ width: '100%', maxWidth: '500px', maxHeight: '90vh', overflowY: 'auto' }}>
-            <h3 style={{ fontSize: 'var(--text-lg)', color: 'var(--primary-900)', marginBottom: 'var(--space-4)' }}>
-              {editingId ? 'শিক্ষকের প্রোফাইল এডিট' : 'নতুন শিক্ষক যুক্ত করুন'}
-            </h3>
+          <div className="admin-card" style={{ width: '100%', maxWidth: '560px', maxHeight: '90vh', overflowY: 'auto' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-4)' }}>
+              <h3 style={{ fontSize: 'var(--text-lg)', color: 'var(--primary-900)', margin: 0 }}>
+                {editingId ? 'শিক্ষকের প্রোফাইল এডিট' : 'নতুন শিক্ষক যুক্ত করুন'}
+              </h3>
+              <button onClick={() => setIsModalOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--neutral-500)' }}>
+                <X size={20} />
+              </button>
+            </div>
+
+            {actionError && (
+              <div style={{ backgroundColor: '#fee2e2', color: '#dc2626', padding: 'var(--space-3)', borderRadius: 'var(--radius-md)', marginBottom: 'var(--space-4)', fontSize: 'var(--text-sm)' }}>
+                {actionError}
+              </div>
+            )}
 
             <form onSubmit={handleSave}>
+              {/* ─── PHOTO UPLOAD ─── */}
               <div className="form-group">
-                <label className="form-label">শিক্ষকের পূর্ণ নাম *</label>
-                <input type="text" required className="form-input" value={name} onChange={(e) => setName(e.target.value)} placeholder="যেমন: নূর মোহাম্মদ সরকার" />
+                <label className="form-label">শিক্ষকের ছবি</label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-4)' }}>
+                  {/* Preview */}
+                  <div style={{ width: '80px', height: '80px', borderRadius: '50%', overflow: 'hidden', backgroundColor: 'var(--primary-100)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid var(--neutral-200)' }}>
+                    {photoUploading ? (
+                      <Loader2 size={24} className="animate-spin" color="var(--primary-500)" />
+                    ) : photoUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={photoUrl} alt="teacher photo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    ) : (
+                      <span style={{ fontSize: '32px' }}>👤</span>
+                    )}
+                  </div>
+
+                  <div style={{ flex: 1 }}>
+                    {/* Hidden file input */}
+                    <input
+                      ref={photoInputRef}
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      style={{ display: 'none' }}
+                      onChange={handlePhotoUpload}
+                      id="teacher-photo-upload"
+                    />
+                    <label
+                      htmlFor="teacher-photo-upload"
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 'var(--space-2)',
+                        padding: 'var(--space-2) var(--space-4)',
+                        backgroundColor: photoUploading ? 'var(--neutral-100)' : 'var(--white)',
+                        border: '1px solid var(--neutral-300)',
+                        borderRadius: 'var(--radius-md)',
+                        cursor: photoUploading ? 'not-allowed' : 'pointer',
+                        fontSize: 'var(--text-sm)',
+                        fontWeight: 600,
+                        color: 'var(--primary-700)',
+                      }}
+                    >
+                      <Camera size={16} />
+                      <span>{photoUploading ? 'আপলোড হচ্ছে...' : photoUrl ? 'ছবি পরিবর্তন করুন' : 'ছবি আপলোড করুন'}</span>
+                    </label>
+
+                    {photoUrl && !photoUploading && (
+                      <button
+                        type="button"
+                        onClick={() => setPhotoUrl(null)}
+                        style={{ display: 'block', marginTop: 'var(--space-1)', background: 'none', border: 'none', color: 'var(--error)', cursor: 'pointer', fontSize: 'var(--text-xs)' }}
+                      >
+                        ছবি সরিয়ে দিন
+                      </button>
+                    )}
+
+                    <p style={{ fontSize: 'var(--text-xs)', color: 'var(--neutral-500)', marginTop: 'var(--space-1)' }}>
+                      JPG, PNG বা WebP। সর্বোচ্চ ৫MB।
+                    </p>
+
+                    {photoUploadError && (
+                      <p style={{ fontSize: 'var(--text-xs)', color: '#dc2626', marginTop: 'var(--space-1)' }}>
+                        ⚠️ {photoUploadError}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* ─── BASIC INFO ─── */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}>
+                <div className="form-group">
+                  <label className="form-label">পূর্ণ নাম *</label>
+                  <input type="text" required className="form-input" value={name} onChange={(e) => setName(e.target.value)} placeholder="যেমন: নূর মোহাম্মদ সরকার" />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">পদবী *</label>
+                  <input type="text" required className="form-input" value={designation} onChange={(e) => setDesignation(e.target.value)} placeholder="যেমন: সহকারী শিক্ষক" />
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}>
+                <div className="form-group">
+                  <label className="form-label">পাঠদানের বিষয়</label>
+                  <input type="text" className="form-input" value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="যেমন: গণিত" />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">বিভাগ</label>
+                  <input type="text" className="form-input" value={department} onChange={(e) => setDepartment(e.target.value)} placeholder="যেমন: বিজ্ঞান বিভাগ" />
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}>
+                <div className="form-group">
+                  <label className="form-label">ফোন নম্বর</label>
+                  <input type="text" className="form-input" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="01531927956" />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">ইমেইল এড্রেস</label>
+                  <input type="email" className="form-input" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="teacher@school.edu.bd" />
+                </div>
               </div>
 
               <div className="form-group">
-                <label className="form-label">পদবী *</label>
-                <input type="text" required className="form-input" value={designation} onChange={(e) => setDesignation(e.target.value)} placeholder="যেমন: সহকারী শিক্ষক" />
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">পাঠদানের বিষয়</label>
-                <input type="text" className="form-input" value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="যেমন: গণিত" />
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">বিভাগ</label>
-                <input type="text" className="form-input" value={department} onChange={(e) => setDepartment(e.target.value)} placeholder="যেমন: বিজ্ঞান বিভাগ" />
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">ফোন নম্বর</label>
-                <input type="text" className="form-input" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="01531927956" />
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">ইমেইল এড্রেস</label>
-                <input type="email" className="form-input" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="teacher@school.edu.bd" />
+                <label className="form-label">সংক্ষিপ্ত পরিচিতি (Bio)</label>
+                <textarea className="form-textarea" rows={3} value={biography} onChange={(e) => setBiography(e.target.value)} placeholder="শিক্ষকের শিক্ষাগত যোগ্যতা ও অভিজ্ঞতা..." />
               </div>
 
               <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
                 <input
                   type="checkbox"
-                  id="isPublished"
+                  id="isPublishedTeacher"
                   checked={isPublished}
                   onChange={(e) => setIsPublished(e.target.checked)}
                 />
-                <label htmlFor="isPublished" className="form-label" style={{ margin: 0, cursor: 'pointer' }}>
-                  পাবলিক ওয়েবসাইটে প্রদর্শন করুন (Published)
+                <label htmlFor="isPublishedTeacher" className="form-label" style={{ margin: 0, cursor: 'pointer' }}>
+                  পাবলিক ওয়েবসাইটে প্রদর্শন করুন (Published)
                 </label>
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 'var(--space-3)', marginTop: 'var(--space-6)' }}>
-                <button type="button" onClick={() => setIsModalOpen(false)} className="btn btn-outline" disabled={submitting}>বাতিল</button>
-                <button type="submit" className="btn btn-primary" style={{ backgroundColor: 'var(--primary-700)', color: 'var(--white)' }} disabled={submitting}>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 'var(--space-3)', marginTop: 'var(--space-4)' }}>
+                <button type="button" onClick={() => setIsModalOpen(false)} className="btn btn-outline" disabled={submitting || photoUploading}>বাতিল</button>
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  style={{ backgroundColor: 'var(--primary-700)', color: 'var(--white)' }}
+                  disabled={submitting || photoUploading}
+                >
                   {submitting ? 'সংরক্ষণ হচ্ছে...' : 'সংরক্ষণ'}
                 </button>
               </div>

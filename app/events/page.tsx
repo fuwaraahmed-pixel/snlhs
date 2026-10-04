@@ -2,66 +2,106 @@ import React from 'react';
 import Link from 'next/link';
 import { createPublicClient } from '@/lib/db/supabase-public';
 
+export const revalidate = 60;
+
 export default async function PublicEventsPage() {
   let events: any[] = [];
+  let schoolName = 'সাহেরা নায়েব ল্যাবরেটরি হাই স্কুল';
   let fetchError: string | null = null;
 
   try {
     const supabase = createPublicClient();
+
+    const { data: schoolData } = await supabase
+      .from('schools')
+      .select('name')
+      .limit(1)
+      .single();
+    if (schoolData?.name) schoolName = schoolData.name;
+
     const { data, error } = await supabase
       .from('events')
-      .select('id, title, description, event_date, location, featured_image')
+      .select('id, title, description, event_date, location, featured_image, is_featured')
       .eq('is_published', true)
       .order('event_date', { ascending: false });
 
     if (error) {
-      console.error('Error fetching public events:', error);
-      fetchError = 'তথ্য লোড করতে সমস্যা হয়েছে।';
+      console.error('Events fetch error:', error.message);
+      fetchError = `তথ্য লোড করতে সমস্যা: ${error.message}`;
     } else if (data) {
       events = data;
     }
-  } catch (err) {
-    console.error('Exception fetching public events:', err);
-    fetchError = 'তথ্য লোড করতে সমস্যা হয়েছে।';
+  } catch (err: any) {
+    console.error('Exception fetching events:', err);
+    fetchError = `সার্ভার এরর: ${err?.message || 'অজানা সমস্যা'}`;
   }
+
+  // Format Bengali date
+  const formatDate = (dateStr: string) => {
+    try {
+      return new Date(dateStr).toLocaleDateString('bn-BD', {
+        year: 'numeric', month: 'long', day: 'numeric',
+      });
+    } catch {
+      return dateStr;
+    }
+  };
 
   return (
     <div style={{ fontFamily: 'var(--font-bengali), var(--font-english)', minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--neutral-50)' }}>
-      {/* Navigation Header */}
+      {/* Header */}
       <header style={{ backgroundColor: 'var(--white)', borderBottom: '2px solid var(--accent-gold)', padding: 'var(--space-4) 0' }}>
-        <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 'var(--space-4)' }}>
           <div>
-            <h1 style={{ fontSize: 'var(--text-xl)', color: 'var(--primary-900)', margin: 0 }}>
-              সাহেরা নায়েব ল্যাবরেটরি হাই স্কুল
-            </h1>
+            <Link href="/" style={{ textDecoration: 'none' }}>
+              <h1 style={{ fontSize: 'var(--text-xl)', color: 'var(--primary-900)', margin: 0 }}>
+                {schoolName}
+              </h1>
+            </Link>
           </div>
-          <nav style={{ display: 'flex', gap: 'var(--space-6)', fontWeight: 600 }}>
-            <Link href="/" style={{ color: 'var(--neutral-700)' }}>মূল পাতা</Link>
-            <Link href="/notices" style={{ color: 'var(--neutral-700)' }}>নোটিশ বোর্ড</Link>
-            <Link href="/teachers" style={{ color: 'var(--neutral-700)' }}>শিক্ষকমণ্ডলী</Link>
-            <Link href="/events" style={{ color: 'var(--primary-700)' }}>ইভেন্ট ও গ্যালারি</Link>
-            <Link href="/admin/login" className="btn btn-outline btn-sm">অ্যাডমিন প্যানেল</Link>
+          <nav style={{ display: 'flex', gap: 'var(--space-5)', fontWeight: 600, flexWrap: 'wrap' }}>
+            <Link href="/" style={{ color: 'var(--neutral-700)', textDecoration: 'none' }}>মূল পাতা</Link>
+            <Link href="/about" style={{ color: 'var(--neutral-700)', textDecoration: 'none' }}>আমাদের কথা</Link>
+            <Link href="/academics" style={{ color: 'var(--neutral-700)', textDecoration: 'none' }}>একাডেমিক</Link>
+            <Link href="/admission" style={{ color: 'var(--neutral-700)', textDecoration: 'none' }}>ভর্তি তথ্য</Link>
+            <Link href="/notices" style={{ color: 'var(--neutral-700)', textDecoration: 'none' }}>নোটিশ বোর্ড</Link>
+            <Link href="/teachers" style={{ color: 'var(--neutral-700)', textDecoration: 'none' }}>শিক্ষকমণ্ডলী</Link>
+            <Link href="/events" style={{ color: 'var(--primary-700)', textDecoration: 'none', borderBottom: '2px solid var(--primary-700)' }}>ইভেন্ট</Link>
+            <Link href="/gallery" style={{ color: 'var(--neutral-700)', textDecoration: 'none' }}>গ্যালারি</Link>
+            <Link href="/contact" style={{ color: 'var(--neutral-700)', textDecoration: 'none' }}>যোগাযোগ</Link>
           </nav>
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="container" style={{ padding: 'var(--space-8) 0', flex: 1 }}>
-        <div style={{ marginBottom: 'var(--space-6)' }}>
-          <h2 style={{ fontSize: 'var(--text-3xl)', color: 'var(--primary-900)', marginBottom: 'var(--space-2)' }}>
-            🎉 ইভেন্ট ও গ্যালারি
+      {/* Hero */}
+      <section style={{ backgroundColor: 'var(--primary-900)', color: 'var(--white)', padding: 'var(--space-12) 0', textAlign: 'center' }}>
+        <div className="container">
+          <h2 style={{ fontSize: 'var(--text-3xl)', color: 'var(--white)', marginBottom: 'var(--space-2)' }}>
+            🎉 ইভেন্ট ও অনুষ্ঠান
           </h2>
-          <p style={{ color: 'var(--neutral-600)' }}>বিদ্যালয়ের সাম্প্রতিক ও আসন্ন ইভেন্টসমূহ।</p>
+          <p style={{ color: 'var(--neutral-200)', maxWidth: '600px', margin: '0 auto' }}>
+            বিদ্যালয়ের সাম্প্রতিক ও আসন্ন ইভেন্টসমূহ।
+          </p>
         </div>
+      </section>
+
+      {/* Main Content */}
+      <main className="container" style={{ padding: 'var(--space-12) 0', flex: 1 }}>
 
         {fetchError ? (
-          <div style={{ backgroundColor: '#fee2e2', color: '#dc2626', padding: 'var(--space-4)', borderRadius: 'var(--radius-md)', textAlign: 'center' }}>
-            {fetchError}
+          <div style={{ textAlign: 'center', padding: 'var(--space-12)', backgroundColor: 'var(--white)', borderRadius: 'var(--radius-lg)', border: '1px solid #fca5a5' }}>
+            <div style={{ fontSize: '48px', marginBottom: 'var(--space-3)' }}>⚠️</div>
+            <h3 style={{ color: '#dc2626', marginBottom: 'var(--space-2)' }}>তথ্য লোড করতে সমস্যা</h3>
+            <p style={{ color: 'var(--neutral-600)', fontSize: 'var(--text-sm)' }}>{fetchError}</p>
           </div>
+
         ) : events.length === 0 ? (
-          <div style={{ backgroundColor: 'var(--white)', padding: 'var(--space-8)', borderRadius: 'var(--radius-lg)', textAlign: 'center', color: 'var(--neutral-600)', border: '1px solid var(--neutral-200)' }}>
-            এই মুহূর্তে কোনো তথ্য যুক্ত করা হয়নি।
+          <div style={{ textAlign: 'center', padding: 'var(--space-16)', backgroundColor: 'var(--white)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--neutral-200)' }}>
+            <div style={{ fontSize: '64px', marginBottom: 'var(--space-4)' }}>📅</div>
+            <h3 style={{ color: 'var(--primary-900)', marginBottom: 'var(--space-2)' }}>এই মুহূর্তে কোনো ইভেন্ট নেই</h3>
+            <p style={{ color: 'var(--neutral-500)', fontSize: 'var(--text-sm)' }}>শীঘ্রই নতুন ইভেন্ট যোগ হবে।</p>
           </div>
+
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 'var(--space-6)' }}>
             {events.map((event) => (
@@ -69,21 +109,67 @@ export default async function PublicEventsPage() {
                 key={event.id}
                 style={{
                   backgroundColor: 'var(--white)',
-                  padding: 'var(--space-6)',
                   borderRadius: 'var(--radius-lg)',
-                  border: '1px solid var(--neutral-200)',
-                  boxShadow: 'var(--shadow-sm)',
+                  border: event.is_featured ? '2px solid var(--accent-gold)' : '1px solid var(--neutral-200)',
+                  overflow: 'hidden',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  transition: 'transform 0.2s, box-shadow 0.2s',
                 }}
               >
-                <h3 style={{ fontSize: 'var(--text-lg)', color: 'var(--primary-900)', marginBottom: 'var(--space-2)' }}>
-                  {event.title}
-                </h3>
-                <p style={{ fontSize: 'var(--text-xs)', color: 'var(--accent-gold-hover)', fontWeight: 600, marginBottom: 'var(--space-2)' }}>
-                  📅 তারিখ: {event.event_date} {event.location ? `| 📍 স্থান: ${event.location}` : ''}
-                </p>
-                <p style={{ fontSize: 'var(--text-sm)', color: 'var(--neutral-700)' }}>
-                  {event.description}
-                </p>
+                {/* Event featured image */}
+                {event.featured_image ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={event.featured_image}
+                    alt={event.title}
+                    style={{ width: '100%', height: '200px', objectFit: 'cover' }}
+                    loading="lazy"
+                  />
+                ) : (
+                  /* Placeholder banner when no image */
+                  <div style={{
+                    height: '120px',
+                    background: 'linear-gradient(135deg, var(--primary-800) 0%, var(--primary-600) 100%)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '48px',
+                  }}>
+                    🎉
+                  </div>
+                )}
+
+                {/* Card body */}
+                <div style={{ padding: 'var(--space-5)', flex: 1, display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
+                  {event.is_featured && (
+                    <span style={{ fontSize: '10px', fontWeight: 700, color: 'var(--accent-gold-hover)', backgroundColor: '#fef3c7', padding: '2px 8px', borderRadius: '20px', display: 'inline-block', width: 'fit-content' }}>
+                      ★ বিশেষ ইভেন্ট
+                    </span>
+                  )}
+
+                  <h3 style={{ fontSize: 'var(--text-lg)', color: 'var(--primary-900)', fontWeight: 700, lineHeight: '1.4', margin: 0 }}>
+                    {event.title}
+                  </h3>
+
+                  <div style={{ display: 'flex', gap: 'var(--space-3)', flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: 'var(--text-xs)', color: 'var(--primary-700)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      📅 {formatDate(event.event_date)}
+                    </span>
+                    {event.location && (
+                      <span style={{ fontSize: 'var(--text-xs)', color: 'var(--neutral-500)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        📍 {event.location}
+                      </span>
+                    )}
+                  </div>
+
+                  {event.description && (
+                    <p style={{ fontSize: 'var(--text-sm)', color: 'var(--neutral-700)', lineHeight: '1.6', margin: 0 }}>
+                      {event.description}
+                    </p>
+                  )}
+                </div>
               </div>
             ))}
           </div>
@@ -93,7 +179,7 @@ export default async function PublicEventsPage() {
       {/* Footer */}
       <footer style={{ backgroundColor: 'var(--primary-900)', color: 'var(--neutral-300)', padding: 'var(--space-6) 0', marginTop: 'auto' }}>
         <div className="container" style={{ textAlign: 'center', fontSize: 'var(--text-sm)' }}>
-          <p>© ২০২৬ সাহেরা নায়েব ল্যাবরেটরি হাই স্কুল। সর্বস্বত্ব সংরক্ষিত।</p>
+          <p>© ২০২৬ {schoolName}। সর্বস্বত্ব সংরক্ষিত।</p>
         </div>
       </footer>
     </div>
