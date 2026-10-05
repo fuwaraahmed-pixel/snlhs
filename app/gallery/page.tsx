@@ -1,8 +1,8 @@
 import React from 'react';
 import Link from 'next/link';
+import Navbar from '@/components/Navbar';
 import { createPublicClient } from '@/lib/db/supabase-public';
 
-// Revalidate every 60 seconds so fresh albums appear quickly
 export const revalidate = 60;
 
 interface GalleryImage {
@@ -14,7 +14,7 @@ interface GalleryAlbum {
   id: string;
   title: string;
   description: string | null;
-  cover_image: string | null;      // actual DB column name
+  cover_image: string | null;
   is_published: boolean;
   created_at: string;
   gallery_images: GalleryImage[];
@@ -28,7 +28,6 @@ export default async function PublicGalleryPage() {
   try {
     const supabase = createPublicClient();
 
-    // Fetch school name
     const { data: schoolData } = await supabase
       .from('schools')
       .select('name')
@@ -36,7 +35,6 @@ export default async function PublicGalleryPage() {
       .single();
     if (schoolData?.name) schoolName = schoolData.name;
 
-    // Fetch published albums WITH their images — uses correct column name 'cover_image'
     const { data: albumsData, error } = await supabase
       .from('gallery_albums')
       .select('id, title, description, cover_image, is_published, created_at, gallery_images(id, image_url)')
@@ -56,29 +54,8 @@ export default async function PublicGalleryPage() {
 
   return (
     <div style={{ fontFamily: 'var(--font-bengali), var(--font-english)', minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--neutral-50)' }}>
-      {/* Header */}
-      <header style={{ backgroundColor: 'var(--white)', borderBottom: '2px solid var(--accent-gold)', padding: 'var(--space-4) 0' }}>
-        <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 'var(--space-4)' }}>
-          <div>
-            <Link href="/" style={{ textDecoration: 'none' }}>
-              <h1 style={{ fontSize: 'var(--text-xl)', color: 'var(--primary-900)', margin: 0 }}>
-                {schoolName}
-              </h1>
-            </Link>
-          </div>
-          <nav style={{ display: 'flex', gap: 'var(--space-5)', fontWeight: 600, flexWrap: 'wrap' }}>
-            <Link href="/" style={{ color: 'var(--neutral-700)', textDecoration: 'none' }}>মূল পাতা</Link>
-            <Link href="/about" style={{ color: 'var(--neutral-700)', textDecoration: 'none' }}>আমাদের কথা</Link>
-            <Link href="/academics" style={{ color: 'var(--neutral-700)', textDecoration: 'none' }}>একাডেমিক</Link>
-            <Link href="/admission" style={{ color: 'var(--neutral-700)', textDecoration: 'none' }}>ভর্তি তথ্য</Link>
-            <Link href="/notices" style={{ color: 'var(--neutral-700)', textDecoration: 'none' }}>নোটিশ বোর্ড</Link>
-            <Link href="/teachers" style={{ color: 'var(--neutral-700)', textDecoration: 'none' }}>শিক্ষকমণ্ডলী</Link>
-            <Link href="/events" style={{ color: 'var(--neutral-700)', textDecoration: 'none' }}>ইভেন্ট</Link>
-            <Link href="/gallery" style={{ color: 'var(--primary-700)', textDecoration: 'none', borderBottom: '2px solid var(--primary-700)' }}>গ্যালারি</Link>
-            <Link href="/contact" style={{ color: 'var(--neutral-700)', textDecoration: 'none' }}>যোগাযোগ</Link>
-          </nav>
-        </div>
-      </header>
+      {/* Responsive Navigation Bar */}
+      <Navbar activePage="gallery" schoolName={schoolName} />
 
       {/* Hero Banner */}
       <section style={{ backgroundColor: 'var(--primary-900)', color: 'var(--white)', padding: 'var(--space-12) 0', textAlign: 'center' }}>
@@ -95,7 +72,6 @@ export default async function PublicGalleryPage() {
       {/* Gallery Content */}
       <main className="container" style={{ padding: 'var(--space-12) 0', flex: 1 }}>
 
-        {/* Error state — show exact message for debugging */}
         {fetchError ? (
           <div style={{ textAlign: 'center', padding: 'var(--space-12)', backgroundColor: 'var(--white)', borderRadius: 'var(--radius-lg)', border: '1px solid #fca5a5' }}>
             <div style={{ fontSize: '48px', marginBottom: 'var(--space-4)' }}>⚠️</div>
@@ -103,12 +79,8 @@ export default async function PublicGalleryPage() {
             <p style={{ color: 'var(--neutral-600)', fontSize: 'var(--text-sm)', marginBottom: 'var(--space-4)' }}>
               {fetchError}
             </p>
-            <p style={{ color: 'var(--neutral-500)', fontSize: 'var(--text-xs)' }}>
-              পেজ রিফ্রেশ করুন অথবা অ্যাডমিনকে জানান।
-            </p>
           </div>
 
-        /* Empty state */
         ) : albums.length === 0 ? (
           <div style={{ textAlign: 'center', padding: 'var(--space-16)', backgroundColor: 'var(--white)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--neutral-200)' }}>
             <div style={{ fontSize: '64px', marginBottom: 'var(--space-4)' }}>📷</div>
@@ -120,13 +92,11 @@ export default async function PublicGalleryPage() {
             </p>
           </div>
 
-        /* Albums grid */
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 'var(--space-6)' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 'var(--space-6)' }}>
             {albums.map((album) => {
               const images = album.gallery_images || [];
               const imageCount = images.length;
-              // Prefer dedicated cover_image column, fall back to first uploaded image
               const coverUrl = album.cover_image || images[0]?.image_url || null;
 
               return (
@@ -168,7 +138,6 @@ export default async function PublicGalleryPage() {
                       </div>
                     )}
 
-                    {/* Image count badge */}
                     <div style={{
                       position: 'absolute',
                       bottom: 'var(--space-2)',
@@ -196,7 +165,6 @@ export default async function PublicGalleryPage() {
                       </p>
                     )}
 
-                    {/* Mini image strip */}
                     {images.length > 1 && (
                       <div style={{ display: 'flex', gap: '4px', marginBottom: 'var(--space-3)', overflow: 'hidden' }}>
                         {images.slice(1, 5).map((img) => (
@@ -209,11 +177,6 @@ export default async function PublicGalleryPage() {
                             loading="lazy"
                           />
                         ))}
-                        {images.length > 5 && (
-                          <div style={{ width: '48px', height: '36px', borderRadius: 'var(--radius-sm)', backgroundColor: 'var(--primary-900)', color: 'var(--white)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 700 }}>
-                            +{images.length - 5}
-                          </div>
-                        )}
                       </div>
                     )}
 
