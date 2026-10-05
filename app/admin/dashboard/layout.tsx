@@ -15,8 +15,26 @@ import {
   School as SchoolIcon,
   Menu,
   X,
-  UserCheck
+  ChevronRight,
 } from 'lucide-react';
+
+const navItems = [
+  { name: 'ড্যাশবোর্ড', href: '/admin/dashboard', icon: LayoutDashboard },
+  { name: 'নোটিশ বোর্ড', href: '/admin/notices', icon: Bell },
+  { name: 'শিক্ষক ও কর্মচারী', href: '/admin/teachers', icon: Users },
+  { name: 'ইভেন্ট ব্যবস্থাপনা', href: '/admin/events', icon: Calendar },
+  { name: 'গ্যালারি অ্যালবাম', href: '/admin/gallery', icon: ImageIcon },
+  { name: 'সেটিংস', href: '/admin/settings', icon: Settings },
+];
+
+const pageTitles: Record<string, string> = {
+  '/admin/dashboard': 'ড্যাশবোর্ড',
+  '/admin/notices': 'নোটিশ বোর্ড',
+  '/admin/teachers': 'শিক্ষক ও কর্মচারী',
+  '/admin/events': 'ইভেন্ট ব্যবস্থাপনা',
+  '/admin/gallery': 'গ্যালারি অ্যালবাম',
+  '/admin/settings': 'সেটিংস',
+};
 
 export default function AdminDashboardLayout({
   children,
@@ -34,81 +52,47 @@ export default function AdminDashboardLayout({
     router.refresh();
   };
 
-  const navItems = [
-    { name: 'ড্যাশবোর্ড', href: '/admin/dashboard', icon: LayoutDashboard },
-    { name: 'নোটিশ ব্যবস্থাপনা', href: '/admin/notices', icon: Bell },
-    { name: 'শিক্ষক ও কর্মচারী', href: '/admin/teachers', icon: Users },
-    { name: 'ইভেন্ট ব্যবস্থাপনা', href: '/admin/events', icon: Calendar },
-    { name: 'গ্যালারি অ্যালবাম', href: '/admin/gallery', icon: ImageIcon },
-    { name: 'স্কুলের তথ্য ও সেটিংস', href: '/admin/settings', icon: Settings },
-  ];
-
   const currentPath = pathname || '';
+  const activePageTitle = Object.entries(pageTitles).find(([key]) =>
+    currentPath === key || currentPath.startsWith(key + '/')
+  )?.[1] || 'অ্যাডমিন';
 
   return (
     <div className="admin-layout">
-      {/* Sidebar Overlay for Mobile */}
+      {/* Mobile Overlay */}
       {sidebarOpen && (
         <div
+          className="sidebar-mobile-overlay"
           onClick={() => setSidebarOpen(false)}
-          style={{
-            position: 'fixed',
-            inset: 0,
-            backgroundColor: 'rgba(0,0,0,0.5)',
-            zIndex: 40
-          }}
+          style={{ display: 'block' }}
         />
       )}
 
-      {/* Sidebar Container */}
-      <aside className={`admin-sidebar ${sidebarOpen ? 'open' : ''}`} style={{
-        position: sidebarOpen ? 'fixed' : 'relative',
-        top: 0,
-        bottom: 0,
-        left: 0,
-        zIndex: 50,
-        width: '260px',
-        backgroundColor: 'var(--primary-900)',
-        color: 'var(--white)'
-      }}>
+      {/* ── SIDEBAR ── */}
+      <aside className={`admin-sidebar${sidebarOpen ? ' open' : ''}`}>
+        {/* Header */}
         <div className="admin-sidebar-header">
-          <div style={{
-            width: '36px',
-            height: '36px',
-            borderRadius: 'var(--radius-md)',
-            backgroundColor: 'var(--accent-gold)',
-            color: 'var(--primary-900)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontWeight: 'bold'
-          }}>
-            <SchoolIcon size={20} />
+          <div className="sidebar-logo-icon">
+            <SchoolIcon size={20} color="#0f1d38" />
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <h2 style={{ fontSize: 'var(--text-sm)', color: 'var(--white)', fontWeight: 700, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              সাহেরা নায়েব হাই স্কুল
-            </h2>
-            <span style={{ fontSize: '11px', color: 'var(--accent-gold)', display: 'block' }}>
-              অ্যাডমিন প্যানেল
-            </span>
+            <p className="sidebar-school-name">সাহেরা নায়েব হাই স্কুল</p>
+            <span className="sidebar-panel-label">Admin Panel</span>
           </div>
           <button
             onClick={() => setSidebarOpen(false)}
             style={{
-              display: 'none',
-              background: 'none',
-              border: 'none',
-              color: 'var(--white)',
-              cursor: 'pointer'
+              background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)',
+              cursor: 'pointer', padding: '4px', borderRadius: '6px'
             }}
-            className="mobile-close-btn"
           >
-            <X size={20} />
+            <X size={18} />
           </button>
         </div>
 
+        {/* Nav */}
         <nav className="admin-nav">
+          <span className="nav-section-label">প্রধান মেনু</span>
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = currentPath === item.href || currentPath.startsWith(item.href + '/');
@@ -116,72 +100,56 @@ export default function AdminDashboardLayout({
               <Link
                 key={item.href}
                 href={item.href}
-                className={`admin-nav-item ${isActive ? 'active' : ''}`}
+                className={`admin-nav-item${isActive ? ' active' : ''}`}
                 onClick={() => setSidebarOpen(false)}
               >
-                <Icon size={18} />
+                <Icon size={18} className="nav-icon" />
                 <span>{item.name}</span>
               </Link>
             );
           })}
         </nav>
 
-        <div style={{ padding: 'var(--space-4)', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
-          <button
-            onClick={handleLogout}
-            className="admin-nav-item"
-            style={{
-              width: '100%',
-              background: 'none',
-              border: 'none',
-              color: '#f87171',
-              cursor: 'pointer',
-              justifyContent: 'flex-start'
-            }}
-          >
-            <LogOut size={18} />
-            <span>লগআউট</span>
+        {/* Profile Footer */}
+        <div className="sidebar-profile">
+          <div className="sidebar-avatar">A</div>
+          <div className="sidebar-profile-info">
+            <div className="sidebar-profile-name">School Admin</div>
+            <div className="sidebar-profile-role">Super Administrator</div>
+          </div>
+          <button className="sidebar-logout-btn" onClick={handleLogout} title="লগআউট">
+            <LogOut size={16} />
           </button>
         </div>
       </aside>
 
-      {/* Main Content Area */}
+      {/* ── MAIN ── */}
       <div className="admin-main">
+        {/* Topbar */}
         <header className="admin-topbar">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+          <div className="topbar-left">
             <button
+              className="topbar-menu-btn"
               onClick={() => setSidebarOpen(true)}
-              style={{
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                color: 'var(--primary-900)'
-              }}
             >
-              <Menu size={24} />
+              <Menu size={22} />
             </button>
-            <h1 style={{ fontSize: 'var(--text-lg)', color: 'var(--primary-900)', margin: 0 }}>
-              অ্যাডমিন ড্যাশবোর্ড
-            </h1>
+            <div className="topbar-breadcrumb">
+              <span>অ্যাডমিন</span>
+              <ChevronRight size={14} />
+              <span className="crumb-active">{activePageTitle}</span>
+            </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 'var(--space-2)',
-              backgroundColor: 'var(--primary-50)',
-              padding: 'var(--space-2) var(--space-3)',
-              borderRadius: 'var(--radius-full)'
-            }}>
-              <UserCheck size={16} color="var(--primary-700)" />
-              <span style={{ fontSize: 'var(--text-xs)', fontWeight: 600, color: 'var(--primary-900)' }}>
-                স্কুল এডমিন
-              </span>
+          <div className="topbar-right">
+            <div className="topbar-badge">
+              <span className="topbar-status-dot" />
+              <span className="badge-text">স্কুল সক্রিয়</span>
             </div>
           </div>
         </header>
 
+        {/* Content */}
         <main className="admin-content">
           {children}
         </main>

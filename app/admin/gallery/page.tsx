@@ -1,7 +1,10 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Plus, Trash2, Eye, EyeOff, ImagePlus, Loader2, FolderOpen, X } from 'lucide-react';
+import {
+  Plus, Trash2, Eye, EyeOff, ImagePlus, Loader2, FolderOpen,
+  X, AlertCircle, CheckCircle, Images
+} from 'lucide-react';
 import {
   getAdminGalleryAlbums,
   createGalleryAlbumAction,
@@ -17,307 +20,259 @@ export default function GalleryManagementPage() {
   const [actionError, setActionError] = useState<string | null>(null);
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
 
-  // Create album modal
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [newTitle, setNewTitle] = useState('');
   const [newDescription, setNewDescription] = useState('');
   const [creating, setCreating] = useState(false);
 
-  // Selected album for image management
   const [selectedAlbum, setSelectedAlbum] = useState<any | null>(null);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const loadAlbums = async () => {
-    setLoading(true);
-    setActionError(null);
+    setLoading(true); setActionError(null);
     const res = await getAdminGalleryAlbums();
-    if (res.error) {
-      setActionError(res.error);
-    } else {
-      setAlbums(res.albums || []);
-    }
+    if (res.error) setActionError(res.error);
+    else setAlbums(res.albums || []);
     setLoading(false);
   };
 
-  useEffect(() => {
-    loadAlbums();
-  }, []);
+  useEffect(() => { loadAlbums(); }, []);
 
   const handleCreateAlbum = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setCreating(true);
-    setActionError(null);
+    e.preventDefault(); setCreating(true); setActionError(null);
     const res = await createGalleryAlbumAction({ title: newTitle, description: newDescription });
     if (res.success) {
-      setIsCreateOpen(false);
-      setNewTitle('');
-      setNewDescription('');
+      setIsCreateOpen(false); setNewTitle(''); setNewDescription('');
       setActionSuccess('অ্যালবাম তৈরি হয়েছে!');
-      setTimeout(() => setActionSuccess(null), 3000);
+      setTimeout(() => setActionSuccess(null), 4000);
       await loadAlbums();
-    } else {
-      setActionError(res.error || 'অ্যালবাম তৈরি করতে ব্যর্থ হয়েছে');
-    }
+    } else setActionError(res.error || 'অ্যালবাম তৈরি ব্যর্থ');
     setCreating(false);
   };
 
   const handleDeleteAlbum = async (id: string) => {
-    if (confirm('আপনি কি নিশ্চিত যে এই অ্যালবামটি মুছে ফেলতে চান? সকল ছবিও মুছে যাবে।')) {
+    if (confirm('এই অ্যালবামটি মুছে ফেলবেন? সকল ছবিও মুছে যাবে।')) {
       const res = await deleteGalleryAlbumAction(id);
       if (res.success) {
         if (selectedAlbum?.id === id) setSelectedAlbum(null);
+        setActionSuccess('অ্যালবাম মুছে ফেলা হয়েছে।');
+        setTimeout(() => setActionSuccess(null), 4000);
         await loadAlbums();
-      } else {
-        alert(res.error || 'মুছতে ব্যর্থ হয়েছে');
-      }
+      } else setActionError(res.error || 'মুছতে ব্যর্থ');
     }
   };
 
   const handleTogglePublish = async (id: string, current: boolean) => {
     const res = await toggleAlbumPublishAction(id, current);
-    if (res.success) {
-      await loadAlbums();
-    } else {
-      alert(res.error || 'স্ট্যাটাস পরিবর্তন করতে ব্যর্থ হয়েছে');
-    }
+    if (res.success) await loadAlbums();
+    else setActionError(res.error || 'স্ট্যাটাস পরিবর্তন ব্যর্থ');
   };
 
   const handleUploadImages = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (!selectedAlbum || files.length === 0) return;
-
-    setUploading(true);
-    setActionError(null);
-
+    setUploading(true); setActionError(null);
     let uploadedCount = 0;
     for (const file of files) {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('albumId', selectedAlbum.id);
-      const res = await uploadGalleryImageAction(formData);
-      if (res.success) {
-        uploadedCount++;
-      } else {
-        setActionError(`"${file.name}" আপলোড করতে ব্যর্থ: ${res.error}`);
-      }
+      const fd = new FormData(); fd.append('file', file); fd.append('albumId', selectedAlbum.id);
+      const res = await uploadGalleryImageAction(fd);
+      if (res.success) uploadedCount++;
+      else setActionError(`"${file.name}" আপলোড ব্যর্থ: ${res.error}`);
     }
-
     if (uploadedCount > 0) {
-      setActionSuccess(`${uploadedCount}টি ছবি সফলভাবে আপলোড হয়েছে!`);
-      setTimeout(() => setActionSuccess(null), 3000);
+      setActionSuccess(`${uploadedCount}টি ছবি আপলোড হয়েছে!`);
+      setTimeout(() => setActionSuccess(null), 4000);
     }
-
     await loadAlbums();
-    // Refresh selected album images
     const updatedAlbums = await getAdminGalleryAlbums();
     if (!updatedAlbums.error) {
       const updated = (updatedAlbums.albums || []).find((a: any) => a.id === selectedAlbum.id);
       if (updated) setSelectedAlbum(updated);
     }
     setUploading(false);
-
-    // Reset file input
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   const handleDeleteImage = async (imageId: string) => {
     if (!confirm('এই ছবিটি মুছে ফেলবেন?')) return;
     const res = await deleteGalleryImageAction(imageId);
-    if (res.success) {
-      if (selectedAlbum) {
-        const updatedAlbums = await getAdminGalleryAlbums();
-        if (!updatedAlbums.error) {
-          const updated = (updatedAlbums.albums || []).find((a: any) => a.id === selectedAlbum.id);
-          if (updated) setSelectedAlbum(updated);
-          setAlbums(updatedAlbums.albums || []);
-        }
+    if (res.success && selectedAlbum) {
+      const updatedAlbums = await getAdminGalleryAlbums();
+      if (!updatedAlbums.error) {
+        const updated = (updatedAlbums.albums || []).find((a: any) => a.id === selectedAlbum.id);
+        if (updated) setSelectedAlbum(updated);
+        setAlbums(updatedAlbums.albums || []);
       }
-    } else {
-      alert(res.error || 'ছবি মুছতে ব্যর্থ হয়েছে');
-    }
+    } else if (!res.success) setActionError(res.error || 'ছবি মুছতে ব্যর্থ');
   };
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-6)', flexWrap: 'wrap', gap: 'var(--space-4)' }}>
-        <div>
-          <h2 style={{ fontSize: 'var(--text-xl)', color: 'var(--primary-900)', margin: 0 }}>
-            ফটো গ্যালারি ব্যবস্থাপনা
-          </h2>
-          <p style={{ fontSize: 'var(--text-sm)', color: 'var(--neutral-600)', margin: 0 }}>
-            গ্যালারি অ্যালবাম তৈরি করুন এবং ছবি আপলোড করুন
-          </p>
+      {/* Page Header */}
+      <div className="page-header">
+        <div className="page-header-left">
+          <h1 className="page-title">
+            ফটো গ্যালারি
+            <span className="page-title-count">{albums.length}টি অ্যালবাম</span>
+          </h1>
+          <p className="page-subtitle">গ্যালারি অ্যালবাম তৈরি এবং ছবি আপলোড করুন</p>
         </div>
-        <button
-          onClick={() => setIsCreateOpen(true)}
-          className="btn btn-primary"
-          style={{ backgroundColor: 'var(--primary-700)', color: 'var(--white)', display: 'inline-flex', alignItems: 'center', gap: 'var(--space-2)' }}
-        >
-          <Plus size={18} />
-          <span>নতুন অ্যালবাম তৈরি করুন</span>
+        <button className="btn btn-primary" onClick={() => setIsCreateOpen(true)}>
+          <Plus size={17} /> নতুন অ্যালবাম তৈরি করুন
         </button>
       </div>
 
-      {actionError && (
-        <div style={{ backgroundColor: '#fee2e2', color: '#dc2626', padding: 'var(--space-4)', borderRadius: 'var(--radius-md)', marginBottom: 'var(--space-4)' }}>
-          {actionError}
-        </div>
-      )}
+      {actionError && <div className="alert alert-error"><AlertCircle size={16} /> {actionError}</div>}
+      {actionSuccess && <div className="alert alert-success"><CheckCircle size={16} /> {actionSuccess}</div>}
 
-      {actionSuccess && (
-        <div style={{ backgroundColor: '#d1fae5', color: '#065f46', padding: 'var(--space-4)', borderRadius: 'var(--radius-md)', marginBottom: 'var(--space-4)' }}>
-          ✅ {actionSuccess}
+      {/* Main Content */}
+      {loading ? (
+        <div className="spinner-wrap">
+          <Loader2 size={30} className="animate-spin" style={{ color: '#1b365d' }} />
+          <p style={{ marginTop: '10px', fontSize: '13px' }}>অ্যালবাম তালিকা লোড হচ্ছে...</p>
         </div>
-      )}
-
-      <div style={{ display: 'grid', gridTemplateColumns: selectedAlbum ? '1fr 1fr' : '1fr', gap: 'var(--space-6)' }}>
-        {/* Albums list */}
-        <div>
-          {loading ? (
-            <div style={{ textAlign: 'center', padding: 'var(--space-8)', color: 'var(--neutral-500)' }}>
-              <Loader2 className="animate-spin" size={24} style={{ margin: '0 auto var(--space-2)' }} />
-              <p>অ্যালবাম লোড হচ্ছে...</p>
-            </div>
-          ) : albums.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: 'var(--space-12)', color: 'var(--neutral-500)', backgroundColor: 'var(--white)', borderRadius: 'var(--radius-lg)', border: '1px dashed var(--neutral-300)' }}>
-              <div style={{ fontSize: '48px', marginBottom: 'var(--space-4)' }}>🖼️</div>
-              <h3 style={{ color: 'var(--primary-900)', marginBottom: 'var(--space-2)' }}>কোনো অ্যালবাম নেই</h3>
-              <p style={{ fontSize: 'var(--text-sm)' }}>প্রথম অ্যালবাম তৈরি করুন।</p>
-            </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+      ) : albums.length === 0 ? (
+        <div className="admin-card">
+          <div className="empty-state">
+            <div className="empty-state-icon">🖼️</div>
+            <p className="empty-state-title">কোনো অ্যালবাম নেই</p>
+            <p className="empty-state-desc">প্রথম গ্যালারি অ্যালবাম তৈরি করুন।</p>
+            <button className="btn btn-primary" onClick={() => setIsCreateOpen(true)}>
+              <Plus size={16} /> অ্যালবাম তৈরি করুন
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div style={{ display: 'grid', gridTemplateColumns: selectedAlbum ? '340px 1fr' : '1fr', gap: '20px', alignItems: 'start' }}>
+          {/* Albums List */}
+          <div>
+            <h3 style={{ fontSize: '13px', fontWeight: 700, color: '#64748b', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+              অ্যালবাম তালিকা
+            </h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               {albums.map((album) => {
                 const imageCount = album.gallery_images?.length ?? 0;
                 const isSelected = selectedAlbum?.id === album.id;
+                const coverImg = album.cover_image || album.gallery_images?.[0]?.image_url;
                 return (
                   <div
                     key={album.id}
-                    className="admin-card"
-                    style={{
-                      padding: 'var(--space-4)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 'var(--space-4)',
-                      cursor: 'pointer',
-                      border: isSelected ? '2px solid var(--primary-700)' : '1px solid var(--neutral-200)',
-                      transition: 'border-color 0.2s',
-                    }}
                     onClick={() => setSelectedAlbum(isSelected ? null : album)}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: '14px',
+                      background: isSelected ? '#f0f4fb' : '#fff',
+                      border: isSelected ? '2px solid #1b365d' : '1px solid #e8eef8',
+                      borderRadius: '12px', padding: '14px',
+                      cursor: 'pointer', transition: 'all 0.15s',
+                      boxShadow: isSelected ? '0 4px 12px rgba(27,54,93,0.10)' : '0 2px 8px rgba(15,28,56,0.04)',
+                    }}
                   >
-                    {/* Cover thumbnail — uses cover_image column or first uploaded image */}
-                    <div style={{ width: '64px', height: '64px', flexShrink: 0, borderRadius: 'var(--radius-md)', overflow: 'hidden', backgroundColor: 'var(--primary-100)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      {(album.cover_image || album.gallery_images?.[0]?.image_url) ? (
+                    {/* Cover */}
+                    <div style={{
+                      width: '64px', height: '64px', borderRadius: '10px', overflow: 'hidden', flexShrink: 0,
+                      background: '#f0f4fb', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      border: '1px solid #e2e8f0',
+                    }}>
+                      {coverImg ? (
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img src={album.cover_image || album.gallery_images[0].image_url} alt={album.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        <img src={coverImg} alt={album.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       ) : (
-                        <FolderOpen size={28} color="var(--primary-500)" />
+                        <FolderOpen size={26} color="#94a3b8" />
                       )}
                     </div>
 
                     {/* Info */}
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontWeight: 700, color: 'var(--primary-900)', fontSize: 'var(--text-base)' }}>{album.title}</div>
-                      {album.description && <div style={{ fontSize: 'var(--text-xs)', color: 'var(--neutral-500)' }}>{album.description}</div>}
-                      <div style={{ fontSize: 'var(--text-xs)', color: 'var(--neutral-400)', marginTop: '4px' }}>📷 {imageCount}টি ছবি</div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontWeight: 700, color: '#0f1d38', fontSize: '14px', marginBottom: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {album.title}
+                      </div>
+                      {album.description && (
+                        <div style={{ fontSize: '12px', color: '#94a3b8', marginBottom: '4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {album.description}
+                        </div>
+                      )}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11.5px', color: '#64748b' }}>
+                        <Images size={12} /> {imageCount}টি ছবি
+                      </div>
                     </div>
 
                     {/* Actions */}
-                    <div style={{ display: 'flex', gap: 'var(--space-2)', alignItems: 'center' }} onClick={(e) => e.stopPropagation()}>
+                    <div style={{ display: 'flex', gap: '4px', flexShrink: 0 }} onClick={(e) => e.stopPropagation()}>
                       <button
+                        className={`status-toggle ${album.is_published ? 'published' : 'draft'}`}
                         onClick={() => handleTogglePublish(album.id, album.is_published)}
-                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: album.is_published ? 'var(--success)' : 'var(--neutral-400)', display: 'flex', alignItems: 'center', gap: '4px', fontSize: 'var(--text-xs)', fontWeight: 600 }}
+                        style={{ fontSize: '11px', padding: '3px 8px' }}
                         title={album.is_published ? 'পাবলিশড' : 'খসড়া'}
                       >
-                        {album.is_published ? <Eye size={16} /> : <EyeOff size={16} />}
+                        {album.is_published ? <Eye size={13} /> : <EyeOff size={13} />}
                       </button>
-                      <button onClick={() => handleDeleteAlbum(album.id)} style={{ background: 'none', border: 'none', color: 'var(--error)', cursor: 'pointer' }}>
-                        <Trash2 size={16} />
+                      <button className="action-btn delete" onClick={() => handleDeleteAlbum(album.id)} title="মুছুন">
+                        <Trash2 size={15} />
                       </button>
                     </div>
                   </div>
                 );
               })}
             </div>
-          )}
-        </div>
+          </div>
 
-        {/* Album Image Management */}
-        {selectedAlbum && (
-          <div>
-            <div className="admin-card" style={{ padding: 'var(--space-5)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-4)' }}>
-                <h3 style={{ fontSize: 'var(--text-lg)', color: 'var(--primary-900)', margin: 0 }}>
-                  📂 {selectedAlbum.title}
-                </h3>
-                <button onClick={() => setSelectedAlbum(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--neutral-500)' }}>
-                  <X size={20} />
-                </button>
+          {/* Album Image Manager */}
+          {selectedAlbum && (
+            <div className="admin-card" style={{ padding: '20px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                <div>
+                  <h3 style={{ fontSize: '15px', fontWeight: 700, color: '#0f1d38', margin: 0 }}>
+                    📂 {selectedAlbum.title}
+                  </h3>
+                  <p style={{ fontSize: '12px', color: '#94a3b8', margin: '3px 0 0' }}>
+                    {selectedAlbum.gallery_images?.length || 0}টি ছবি
+                  </p>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  {/* Upload Button */}
+                  <input ref={fileInputRef} type="file" accept="image/*" multiple style={{ display: 'none' }} onChange={handleUploadImages} id="gallery-image-upload" />
+                  <label
+                    htmlFor="gallery-image-upload"
+                    className="btn btn-primary"
+                    style={{ cursor: uploading ? 'not-allowed' : 'pointer', opacity: uploading ? 0.7 : 1, fontSize: '13px', padding: '8px 16px' }}
+                  >
+                    {uploading ? <Loader2 size={14} className="animate-spin" /> : <ImagePlus size={15} />}
+                    {uploading ? 'আপলোড হচ্ছে...' : 'ছবি আপলোড করুন'}
+                  </label>
+                  <button className="modal-close-btn" onClick={() => setSelectedAlbum(null)} title="বন্ধ করুন">
+                    <X size={17} />
+                  </button>
+                </div>
               </div>
 
-              {/* Upload button */}
-              <div style={{ marginBottom: 'var(--space-4)' }}>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  style={{ display: 'none' }}
-                  onChange={handleUploadImages}
-                  id="gallery-image-upload"
-                />
-                <label
-                  htmlFor="gallery-image-upload"
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 'var(--space-2)',
-                    padding: 'var(--space-2) var(--space-4)',
-                    backgroundColor: uploading ? 'var(--neutral-200)' : 'var(--primary-700)',
-                    color: uploading ? 'var(--neutral-600)' : 'var(--white)',
-                    borderRadius: 'var(--radius-md)',
-                    cursor: uploading ? 'not-allowed' : 'pointer',
-                    fontSize: 'var(--text-sm)',
-                    fontWeight: 600,
-                  }}
-                >
-                  {uploading ? <Loader2 size={16} className="animate-spin" /> : <ImagePlus size={16} />}
-                  <span>{uploading ? 'আপলোড হচ্ছে...' : 'ছবি আপলোড করুন'}</span>
-                </label>
-              </div>
-
-              {/* Images grid */}
+              {/* Images Grid */}
               {(selectedAlbum.gallery_images || []).length === 0 ? (
-                <div style={{ textAlign: 'center', padding: 'var(--space-8)', color: 'var(--neutral-500)', backgroundColor: 'var(--neutral-50)', borderRadius: 'var(--radius-md)', border: '1px dashed var(--neutral-300)' }}>
-                  <ImagePlus size={32} style={{ marginBottom: 'var(--space-2)' }} />
-                  <p style={{ fontSize: 'var(--text-sm)' }}>এই অ্যালবামে কোনো ছবি নেই।</p>
+                <div style={{
+                  textAlign: 'center', padding: '36px 24px',
+                  background: '#f8fafc', borderRadius: '10px',
+                  border: '2px dashed #d4dde9', color: '#94a3b8',
+                }}>
+                  <ImagePlus size={32} style={{ margin: '0 auto 10px', opacity: 0.5 }} />
+                  <p style={{ fontSize: '13px', margin: 0 }}>এই অ্যালবামে কোনো ছবি নেই।</p>
+                  <p style={{ fontSize: '12px', marginTop: '4px', color: '#cbd5e1' }}>উপরের বাটন থেকে ছবি আপলোড করুন।</p>
                 </div>
               ) : (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: 'var(--space-3)' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(110px, 1fr))', gap: '10px' }}>
                   {(selectedAlbum.gallery_images || []).map((img: any) => (
-                    <div key={img.id} style={{ position: 'relative', borderRadius: 'var(--radius-md)', overflow: 'hidden', aspectRatio: '1', backgroundColor: 'var(--neutral-100)' }}>
+                    <div key={img.id} style={{ position: 'relative', borderRadius: '10px', overflow: 'hidden', aspectRatio: '1', backgroundColor: '#f0f4fb', border: '1px solid #e8eef8' }}>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={img.image_url}
-                        alt="gallery"
-                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                      />
+                      <img src={img.image_url} alt="gallery" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       <button
                         onClick={() => handleDeleteImage(img.id)}
                         style={{
-                          position: 'absolute',
-                          top: '4px',
-                          right: '4px',
-                          background: 'rgba(220,38,38,0.9)',
-                          border: 'none',
-                          borderRadius: '50%',
-                          width: '24px',
-                          height: '24px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          cursor: 'pointer',
-                          color: 'white',
+                          position: 'absolute', top: '5px', right: '5px',
+                          background: 'rgba(220,38,38,0.88)', border: 'none',
+                          borderRadius: '50%', width: '24px', height: '24px',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          cursor: 'pointer', color: '#fff',
+                          boxShadow: '0 1px 4px rgba(0,0,0,0.3)',
+                          transition: 'background 0.13s',
                         }}
                         title="ছবি মুছুন"
                       >
@@ -328,46 +283,39 @@ export default function GalleryManagementPage() {
                 </div>
               )}
             </div>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      )}
 
       {/* Create Album Modal */}
       {isCreateOpen && (
-        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: 'var(--space-4)' }}>
-          <div className="admin-card" style={{ width: '100%', maxWidth: '450px' }}>
-            <h3 style={{ fontSize: 'var(--text-lg)', color: 'var(--primary-900)', marginBottom: 'var(--space-4)' }}>
-              নতুন গ্যালারি অ্যালবাম তৈরি করুন
-            </h3>
-            <form onSubmit={handleCreateAlbum}>
-              <div className="form-group">
-                <label className="form-label">অ্যালবামের শিরোনাম *</label>
-                <input
-                  type="text"
-                  required
-                  className="form-input"
-                  value={newTitle}
-                  onChange={(e) => setNewTitle(e.target.value)}
-                  placeholder="যেমন: বার্ষিক ক্রীড়া প্রতিযোগিতা ২০২৬"
-                />
-              </div>
-              <div className="form-group">
-                <label className="form-label">বিবরণ (ঐচ্ছিক)</label>
-                <textarea
-                  className="form-textarea"
-                  rows={3}
-                  value={newDescription}
-                  onChange={(e) => setNewDescription(e.target.value)}
-                  placeholder="অ্যালবামের বিষয়বস্তু..."
-                />
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 'var(--space-3)', marginTop: 'var(--space-4)' }}>
-                <button type="button" onClick={() => setIsCreateOpen(false)} className="btn btn-outline" disabled={creating}>বাতিল</button>
-                <button type="submit" className="btn btn-primary" style={{ backgroundColor: 'var(--primary-700)', color: 'var(--white)' }} disabled={creating}>
-                  {creating ? 'তৈরি হচ্ছে...' : 'অ্যালবাম তৈরি করুন'}
-                </button>
-              </div>
-            </form>
+        <div className="modal-overlay">
+          <div className="modal-box" style={{ maxWidth: '460px' }}>
+            <div className="modal-header">
+              <h2 className="modal-title">🗂️ নতুন গ্যালারি অ্যালবাম</h2>
+              <button className="modal-close-btn" onClick={() => setIsCreateOpen(false)}>
+                <X size={17} />
+              </button>
+            </div>
+            <div className="modal-body">
+              <form onSubmit={handleCreateAlbum}>
+                <div className="form-group">
+                  <label className="form-label">অ্যালবামের শিরোনাম *</label>
+                  <input type="text" required className="form-input" value={newTitle} onChange={(e) => setNewTitle(e.target.value)} placeholder="যেমন: বার্ষিক ক্রীড়া প্রতিযোগিতা ২০২৬" />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">বিবরণ (ঐচ্ছিক)</label>
+                  <textarea className="form-textarea" rows={3} value={newDescription} onChange={(e) => setNewDescription(e.target.value)} placeholder="অ্যালবামের বিষয়বস্তু..." />
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                  <button type="button" onClick={() => setIsCreateOpen(false)} className="btn btn-outline" disabled={creating}>বাতিল</button>
+                  <button type="submit" className="btn btn-primary" disabled={creating}>
+                    {creating && <Loader2 size={14} className="animate-spin" />}
+                    {creating ? 'তৈরি হচ্ছে...' : 'অ্যালবাম তৈরি করুন'}
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
       )}
