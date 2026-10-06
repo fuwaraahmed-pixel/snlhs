@@ -36,7 +36,9 @@ const pageTitles: Record<string, string> = {
   '/admin/settings': 'সেটিংস',
 };
 
-export default function AdminDashboardLayout({
+const PUBLIC_ADMIN_PATHS = ['/admin/login', '/admin/forgot-password', '/admin/reset-password'];
+
+export default function AdminRootLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -45,6 +47,14 @@ export default function AdminDashboardLayout({
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  const currentPath = pathname || '';
+
+  // Auth pages under /admin render without sidebar
+  const isAuthPage = PUBLIC_ADMIN_PATHS.some((p) => currentPath === p || currentPath.startsWith(p + '/'));
+  if (isAuthPage) {
+    return <>{children}</>;
+  }
+
   const handleLogout = async () => {
     const supabase = createClient();
     await supabase.auth.signOut();
@@ -52,7 +62,6 @@ export default function AdminDashboardLayout({
     router.refresh();
   };
 
-  const currentPath = pathname || '';
   const activePageTitle = Object.entries(pageTitles).find(([key]) =>
     currentPath === key || currentPath.startsWith(key + '/')
   )?.[1] || 'অ্যাডমিন';
@@ -95,7 +104,10 @@ export default function AdminDashboardLayout({
           <span className="nav-section-label">প্রধান মেনু</span>
           {navItems.map((item) => {
             const Icon = item.icon;
-            const isActive = currentPath === item.href || currentPath.startsWith(item.href + '/');
+            const isActive =
+              item.href === '/admin/dashboard'
+                ? currentPath === '/admin/dashboard'
+                : currentPath === item.href || currentPath.startsWith(item.href + '/');
             return (
               <Link
                 key={item.href}
