@@ -1,16 +1,51 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Menu, X, Lock, Phone, School as SchoolIcon } from 'lucide-react';
+import { createClient } from '@/lib/db/supabase-client';
 
 interface NavbarProps {
   activePage?: string;
   schoolName?: string;
 }
 
-export default function Navbar({ activePage = 'home', schoolName = 'সাহেরা নায়েব ল্যাবরেটরি হাই স্কুল' }: NavbarProps) {
+export default function Navbar({ activePage = 'home', schoolName: initialSchoolName }: NavbarProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [schoolInfo, setSchoolInfo] = useState({
+    name: initialSchoolName || 'সাহেরা নায়েব ল্যাবরেটরি হাই স্কুল',
+    phone: '01531927956',
+    eiin: '138293',
+    board: 'ঢাকা শিক্ষা বোর্ড',
+    motto: 'শিক্ষা • শৃঙ্খলা • চরিত্র',
+  });
+
+  useEffect(() => {
+    async function fetchSchoolInfo() {
+      try {
+        const supabase = createClient();
+        const { data, error } = await supabase
+          .from('schools')
+          .select('name, phone, settings')
+          .limit(1)
+          .maybeSingle();
+
+        if (data && !error) {
+          const st = (data.settings as Record<string, any>) || {};
+          setSchoolInfo({
+            name: data.name || initialSchoolName || 'সাহেরা নায়েব ল্যাবরেটরি হাই স্কুল',
+            phone: data.phone || '01531927956',
+            eiin: st.eiin || '138293',
+            board: st.board || 'ঢাকা শিক্ষা বোর্ড',
+            motto: st.motto || 'শিক্ষা • শৃঙ্খলা • চরিত্র',
+          });
+        }
+      } catch (err) {
+        // Fallback to initial values gracefully
+      }
+    }
+    fetchSchoolInfo();
+  }, [initialSchoolName]);
 
   const navLinks = [
     { name: 'মূল পাতা', href: '/', key: 'home' },
@@ -30,13 +65,13 @@ export default function Navbar({ activePage = 'home', schoolName = 'সাহে
       <div style={{ backgroundColor: 'var(--primary-900)', color: 'var(--white)', padding: '6px 0', fontSize: '12px' }}>
         <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-            <span>EIIN: ১২৩৪৫৬</span>
+            <span>EIIN: {schoolInfo.eiin}</span>
             <span>|</span>
-            <span>ঢাকা শিক্ষা বোর্ড</span>
+            <span>{schoolInfo.board}</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <a href="tel:01531927956" style={{ color: 'var(--neutral-300)', display: 'inline-flex', alignItems: 'center', gap: '4px', textDecoration: 'none' }}>
-              <Phone size={12} /> 01531927956
+            <a href={`tel:${schoolInfo.phone}`} style={{ color: 'var(--neutral-300)', display: 'inline-flex', alignItems: 'center', gap: '4px', textDecoration: 'none' }}>
+              <Phone size={12} /> {schoolInfo.phone}
             </a>
             <Link href="/admin/login" style={{ color: 'var(--accent-gold)', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '4px', textDecoration: 'none' }}>
               <Lock size={12} /> অ্যাডমিন লগইন
@@ -66,10 +101,10 @@ export default function Navbar({ activePage = 'home', schoolName = 'সাহে
             </div>
             <div>
               <h1 style={{ fontSize: 'var(--text-lg)', color: 'var(--primary-900)', margin: 0, fontWeight: 700, lineHeight: 1.2 }}>
-                {schoolName}
+                {schoolInfo.name}
               </h1>
               <p style={{ fontSize: '11px', color: 'var(--accent-gold-hover)', fontWeight: 600, margin: 0 }}>
-                শিক্ষা • শৃঙ্খলা • চরিত্র
+                {schoolInfo.motto}
               </p>
             </div>
           </Link>

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   Save, CheckCircle2, Loader2, AlertCircle,
   Building2, Phone, Mail, MapPin, BookOpen, User, GraduationCap
@@ -10,6 +11,7 @@ import { getAdminSchoolSettings, updateSchoolSettingsAction } from '@/lib/action
 type Tab = 'basic' | 'contact' | 'principal';
 
 export default function SchoolSettingsPage() {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<Tab>('basic');
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -46,14 +48,30 @@ export default function SchoolSettingsPage() {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault(); setSubmitting(true); setErrorMsg(null); setSuccessMsg(null);
-    const payload = { name, phone, email, address, settings: { eiin, established, board, motto, principal_name: principalName, principal_message: principalMessage } };
+    const payload = {
+      name,
+      phone,
+      email,
+      address,
+      settings: {
+        eiin,
+        established,
+        board,
+        motto,
+        principal_name: principalName,
+        principal_message: principalMessage,
+      },
+    };
     const res = await updateSchoolSettingsAction(payload);
     setSubmitting(false);
     if (res.success) {
       setSuccessMsg('সেটিংস সফলভাবে সংরক্ষণ হয়েছে!');
       setTimeout(() => setSuccessMsg(null), 5000);
+      router.refresh();
       loadSettings();
-    } else setErrorMsg(res.error || 'সেটিংস সংরক্ষণ ব্যর্থ');
+    } else {
+      setErrorMsg(res.error || 'সেটিংস সংরক্ষণ ব্যর্থ');
+    }
   };
 
   const tabs: { id: Tab; label: string; icon: React.ElementType }[] = [

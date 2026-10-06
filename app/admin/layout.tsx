@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { createClient } from '@/lib/db/supabase-client';
@@ -46,6 +46,22 @@ export default function AdminRootLayout({
   const pathname = usePathname();
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [schoolName, setSchoolName] = useState('সাহেরা নায়েব হাই স্কুল');
+
+  useEffect(() => {
+    async function loadSchool() {
+      try {
+        const supabase = createClient();
+        const { data } = await supabase.from('schools').select('name').limit(1).maybeSingle();
+        if (data?.name) {
+          setSchoolName(data.name);
+        }
+      } catch (err) {
+        // Fallback gracefully
+      }
+    }
+    loadSchool();
+  }, [pathname]);
 
   const currentPath = pathname || '';
 
@@ -85,7 +101,7 @@ export default function AdminRootLayout({
             <SchoolIcon size={20} color="#0f1d38" />
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <p className="sidebar-school-name">সাহেরা নায়েব হাই স্কুল</p>
+            <p className="sidebar-school-name">{schoolName}</p>
             <span className="sidebar-panel-label">Admin Panel</span>
           </div>
           <button

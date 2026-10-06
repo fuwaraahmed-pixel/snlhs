@@ -70,8 +70,11 @@ export const SchoolSettingsSchema = z.object({
   logo_url: relativePathValidation,
   favicon_url: relativePathValidation,
   settings: z.object({
-    motto: z.string().optional(),
+    eiin: z.string().optional(),
     established: z.string().optional(),
+    board: z.string().optional(),
+    motto: z.string().optional(),
+    principal_name: z.string().optional(),
     principal_message: z.string().optional(),
     stats: z.array(z.object({
       id: z.string(),
