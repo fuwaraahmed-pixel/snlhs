@@ -1,5 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
+import Navbar from '@/components/Navbar';
 import { createPublicClient } from '@/lib/db/supabase-public';
 
 export default async function PublicAboutPage() {
@@ -48,28 +49,7 @@ export default async function PublicAboutPage() {
   return (
     <div style={{ fontFamily: 'var(--font-bengali), var(--font-english)', minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--neutral-50)' }}>
       {/* Header */}
-      <header style={{ backgroundColor: 'var(--white)', borderBottom: '2px solid var(--accent-gold)', padding: 'var(--space-4) 0' }}>
-        <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 'var(--space-4)' }}>
-          <div>
-            <h1 style={{ fontSize: 'var(--text-xl)', color: 'var(--primary-900)', margin: 0 }}>
-              {schoolInfo.name}
-            </h1>
-            <p style={{ fontSize: 'var(--text-xs)', color: 'var(--accent-gold-hover)', fontWeight: 600, margin: 0 }}>
-              {schoolInfo.motto}
-            </p>
-          </div>
-          <nav style={{ display: 'flex', gap: 'var(--space-6)', fontWeight: 600 }}>
-            <Link href="/" style={{ color: 'var(--neutral-700)' }}>মূল পাতা</Link>
-            <Link href="/about" style={{ color: 'var(--primary-700)' }}>আমাদের কথা</Link>
-            <Link href="/academics" style={{ color: 'var(--neutral-700)' }}>একাডেমিক</Link>
-            <Link href="/admission" style={{ color: 'var(--neutral-700)' }}>ভর্তি তথ্য</Link>
-            <Link href="/notices" style={{ color: 'var(--neutral-700)' }}>নোটিশ বোর্ড</Link>
-            <Link href="/teachers" style={{ color: 'var(--neutral-700)' }}>শিক্ষকমণ্ডলী</Link>
-            <Link href="/events" style={{ color: 'var(--neutral-700)' }}>ইভেন্ট ও গ্যালারি</Link>
-            <Link href="/contact" style={{ color: 'var(--neutral-700)' }}>যোগাযোগ</Link>
-          </nav>
-        </div>
-      </header>
+      <Navbar activePage="about" schoolName={schoolInfo.name} />
 
       {/* Hero Banner */}
       <section style={{ backgroundColor: 'var(--primary-900)', color: 'var(--white)', padding: 'var(--space-12) 0', textAlign: 'center' }}>

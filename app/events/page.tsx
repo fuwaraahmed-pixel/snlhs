@@ -1,5 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
+import Navbar from '@/components/Navbar';
 import { createPublicClient } from '@/lib/db/supabase-public';
 
 export const revalidate = 60;
@@ -50,28 +51,7 @@ export default async function PublicEventsPage() {
   return (
     <div style={{ fontFamily: 'var(--font-bengali), var(--font-english)', minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--neutral-50)' }}>
       {/* Header */}
-      <header style={{ backgroundColor: 'var(--white)', borderBottom: '2px solid var(--accent-gold)', padding: 'var(--space-4) 0' }}>
-        <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 'var(--space-4)' }}>
-          <div>
-            <Link href="/" style={{ textDecoration: 'none' }}>
-              <h1 style={{ fontSize: 'var(--text-xl)', color: 'var(--primary-900)', margin: 0 }}>
-                {schoolName}
-              </h1>
-            </Link>
-          </div>
-          <nav style={{ display: 'flex', gap: 'var(--space-5)', fontWeight: 600, flexWrap: 'wrap' }}>
-            <Link href="/" style={{ color: 'var(--neutral-700)', textDecoration: 'none' }}>মূল পাতা</Link>
-            <Link href="/about" style={{ color: 'var(--neutral-700)', textDecoration: 'none' }}>আমাদের কথা</Link>
-            <Link href="/academics" style={{ color: 'var(--neutral-700)', textDecoration: 'none' }}>একাডেমিক</Link>
-            <Link href="/admission" style={{ color: 'var(--neutral-700)', textDecoration: 'none' }}>ভর্তি তথ্য</Link>
-            <Link href="/notices" style={{ color: 'var(--neutral-700)', textDecoration: 'none' }}>নোটিশ বোর্ড</Link>
-            <Link href="/teachers" style={{ color: 'var(--neutral-700)', textDecoration: 'none' }}>শিক্ষকমণ্ডলী</Link>
-            <Link href="/events" style={{ color: 'var(--primary-700)', textDecoration: 'none', borderBottom: '2px solid var(--primary-700)' }}>ইভেন্ট</Link>
-            <Link href="/gallery" style={{ color: 'var(--neutral-700)', textDecoration: 'none' }}>গ্যালারি</Link>
-            <Link href="/contact" style={{ color: 'var(--neutral-700)', textDecoration: 'none' }}>যোগাযোগ</Link>
-          </nav>
-        </div>
-      </header>
+      <Navbar activePage="events" schoolName={schoolName} />
 
       {/* Hero */}
       <section style={{ backgroundColor: 'var(--primary-900)', color: 'var(--white)', padding: 'var(--space-12) 0', textAlign: 'center' }}>

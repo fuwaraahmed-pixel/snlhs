@@ -35,8 +35,8 @@ body {
 
 /* Accessibility Focus Ring */
 :focus-visible {
-  outline: 3px solid var(--accent-gold);
-  outline-offset: 3px;
+  outline: 2px solid rgba(27, 54, 93, 0.4);
+  outline-offset: 2px;
 }
 
 /* Typography Hierarchy */
