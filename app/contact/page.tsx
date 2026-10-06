@@ -1,6 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
+import Footer from '@/components/Footer';
 import { createPublicClient } from '@/lib/db/supabase-public';
 
 export const revalidate = 3600;
@@ -235,12 +236,8 @@ export default async function PublicContactPage() {
         </div>
       </main>
 
-      {/* Footer */}
-      <footer style={{ backgroundColor: 'var(--primary-900)', color: 'var(--neutral-300)', padding: 'var(--space-6) 0', marginTop: 'auto' }}>
-        <div className="container" style={{ textAlign: 'center', fontSize: 'var(--text-sm)' }}>
-          <p>© ২০২৬ {schoolInfo.name}। সর্বস্বত্ব সংরক্ষিত।</p>
-        </div>
-      </footer>
+      {/* Institutional Footer */}
+      <Footer schoolInfo={schoolInfo} />
     </div>
   );
 }

@@ -76,6 +76,10 @@ export const SchoolSettingsSchema = z.object({
     motto: z.string().optional(),
     principal_name: z.string().optional(),
     principal_message: z.string().optional(),
+    hero_badge: z.string().optional(),
+    hero_title: z.string().optional(),
+    hero_subtitle: z.string().optional(),
+    announcement: z.string().optional(),
     stats: z.array(z.object({
       id: z.string(),
       label: z.string(),

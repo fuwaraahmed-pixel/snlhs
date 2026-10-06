@@ -4,11 +4,12 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Save, CheckCircle2, Loader2, AlertCircle,
-  Building2, Phone, Mail, MapPin, BookOpen, User, GraduationCap
+  Building2, Phone, Mail, MapPin, BookOpen, User, GraduationCap,
+  BarChart3, Megaphone, Sparkles
 } from 'lucide-react';
 import { getAdminSchoolSettings, updateSchoolSettingsAction } from '@/lib/actions/settings-actions';
 
-type Tab = 'basic' | 'contact' | 'principal';
+type Tab = 'basic' | 'contact' | 'homepage' | 'principal';
 
 export default function SchoolSettingsPage() {
   const router = useRouter();
@@ -29,6 +30,18 @@ export default function SchoolSettingsPage() {
   const [principalName, setPrincipalName] = useState('নূর মোহাম্মদ সরকার (সাগর)');
   const [principalMessage, setPrincipalMessage] = useState('');
 
+  // Homepage Specific Configurations
+  const [heroBadge, setHeroBadge] = useState('২০২৬ শিক্ষাবর্ষের ভর্তি কার্যক্রম শুরু');
+  const [heroTitle, setHeroTitle] = useState('মেধা, শৃঙ্খলা ও উন্নত ভবিষ্যতের সঠিক দিশারী');
+  const [heroSubtitle, setHeroSubtitle] = useState('সাহেরা নায়েব ল্যাবরেটরি হাই স্কুল শিক্ষার্থীদের জন্য আধুনিক শিক্ষা, নৈতিক মূল্যবোধ ও সৃজনশীল বিকাশের এক নিরাপদ পরিবেশ গড়ে তুলতে প্রতিশ্রুতিবদ্ধ।');
+  const [announcement, setAnnouncement] = useState('২০২৬ শিক্ষাবর্ষে ষষ্ঠ থেকে নবম শ্রেণীতে নতুন শিক্ষার্থী ভর্তির তথ্য এবং আবেদন ফরম ডাউনলোড কেন্দ্র উন্মুক্ত করা হয়েছে।');
+
+  // Statistics Counter
+  const [studentCount, setStudentCount] = useState('১২০০');
+  const [teacherCount, setTeacherCount] = useState('৪৫');
+  const [passRate, setPassRate] = useState('৯৮');
+  const [experienceYears, setExperienceYears] = useState('২৫');
+
   const loadSettings = async () => {
     setLoading(true); setErrorMsg(null);
     const res = await getAdminSchoolSettings();
@@ -40,6 +53,22 @@ export default function SchoolSettingsPage() {
       setEiin(st.eiin || '138293'); setEstablished(st.established || '১৯৯৮');
       setBoard(st.board || 'ঢাকা শিক্ষা বোর্ড'); setMotto(st.motto || 'শিক্ষা • শৃঙ্খলা • চরিত্র');
       setPrincipalName(st.principal_name || ''); setPrincipalMessage(st.principal_message || '');
+
+      setHeroBadge(st.hero_badge || '২০২৬ শিক্ষাবর্ষের ভর্তি কার্যক্রম শুরু');
+      setHeroTitle(st.hero_title || 'মেধা, শৃঙ্খলা ও উন্নত ভবিষ্যতের সঠিক দিশারী');
+      setHeroSubtitle(st.hero_subtitle || 'সাহেরা নায়েব ল্যাবরেটরি হাই স্কুল শিক্ষার্থীদের জন্য আধুনিক শিক্ষা, নৈতিক মূল্যবোধ ও সৃজনশীল বিকাশের এক নিরাপদ পরিবেশ গড়ে তুলতে প্রতিশ্রুতিবদ্ধ।');
+      setAnnouncement(st.announcement || '২০২৬ শিক্ষাবর্ষে ষষ্ঠ থেকে নবম শ্রেণীতে নতুন শিক্ষার্থী ভর্তির তথ্য এবং আবেদন ফরম ডাউনলোড কেন্দ্র উন্মুক্ত করা হয়েছে।');
+
+      if (Array.isArray(st.stats) && st.stats.length > 0) {
+        const std = st.stats.find((item: any) => item.id === 'students');
+        const tch = st.stats.find((item: any) => item.id === 'teachers');
+        const psr = st.stats.find((item: any) => item.id === 'passRate');
+        const exp = st.stats.find((item: any) => item.id === 'experience');
+        if (std?.value) setStudentCount(std.value);
+        if (tch?.value) setTeacherCount(tch.value);
+        if (psr?.value) setPassRate(psr.value);
+        if (exp?.value) setExperienceYears(exp.value);
+      }
     }
     setLoading(false);
   };
@@ -60,6 +89,16 @@ export default function SchoolSettingsPage() {
         motto,
         principal_name: principalName,
         principal_message: principalMessage,
+        hero_badge: heroBadge,
+        hero_title: heroTitle,
+        hero_subtitle: heroSubtitle,
+        announcement: announcement,
+        stats: [
+          { id: 'students', label: 'বর্তমান শিক্ষার্থী', value: studentCount, suffix: '+' },
+          { id: 'teachers', label: 'অভিজ্ঞ শিক্ষক মণ্ডলী', value: teacherCount, suffix: '+' },
+          { id: 'passRate', label: 'পাসের সাফল্য হার', value: passRate, suffix: '%' },
+          { id: 'experience', label: 'বছরের গৌরবময় ঐতিহ্য', value: experienceYears, suffix: '+' },
+        ],
       },
     };
     const res = await updateSchoolSettingsAction(payload);
@@ -77,6 +116,7 @@ export default function SchoolSettingsPage() {
   const tabs: { id: Tab; label: string; icon: React.ElementType }[] = [
     { id: 'basic', label: 'মৌলিক তথ্য', icon: Building2 },
     { id: 'contact', label: 'যোগাযোগ ও ঠিকানা', icon: Phone },
+    { id: 'homepage', label: 'হোমপেইজ ও পরিসংখ্যান', icon: BarChart3 },
     { id: 'principal', label: 'প্রধান শিক্ষকের বাণী', icon: GraduationCap },
   ];
 
@@ -221,6 +261,95 @@ export default function SchoolSettingsPage() {
                   {phone && <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#334155' }}><Phone size={13} color="#94a3b8" /> {phone}</div>}
                   {email && <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#334155' }}><Mail size={13} color="#94a3b8" /> {email}</div>}
                   {address && <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', fontSize: '13px', color: '#334155' }}><MapPin size={13} color="#94a3b8" style={{ marginTop: '2px', flexShrink: 0 }} /> {address}</div>}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Homepage & Statistics Tab */}
+          {activeTab === 'homepage' && (
+            <div className="admin-card">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px', paddingBottom: '16px', borderBottom: '1px solid #f1f5f9' }}>
+                <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#f5f3ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <BarChart3 size={18} color="#7c3aed" />
+                </div>
+                <div>
+                  <h3 style={{ fontSize: '14px', fontWeight: 700, color: '#0f1d38', margin: 0 }}>হোমপেইজ ব্যানার ও পরিসংখ্যান</h3>
+                  <p style={{ fontSize: '12px', color: '#94a3b8', margin: 0 }}>হোমপেইজের প্রধান শিরোনাম, জরুরী ঘোষণা এবং পরিসংখ্যান কাউন্টার নিয়ন্ত্রণ করুন</p>
+                </div>
+              </div>
+
+              {/* Statistics Counters */}
+              <div style={{ marginBottom: '24px' }}>
+                <h4 style={{ fontSize: '13px', fontWeight: 700, color: '#1b365d', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Sparkles size={14} color="#c59b27" /> প্রাতিষ্ঠানিক পরিসংখ্যান কাউন্টার (Statistics Counter)
+                </h4>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '14px' }}>
+                  <div className="form-group" style={{ margin: 0 }}>
+                    <label className="form-label">শিক্ষার্থী সংখ্যা (+)</label>
+                    <input type="text" className="form-input" value={studentCount} onChange={(e) => setStudentCount(e.target.value)} placeholder="১২০০" />
+                  </div>
+                  <div className="form-group" style={{ margin: 0 }}>
+                    <label className="form-label">শিক্ষক মণ্ডলী (+)</label>
+                    <input type="text" className="form-input" value={teacherCount} onChange={(e) => setTeacherCount(e.target.value)} placeholder="৪৫" />
+                  </div>
+                  <div className="form-group" style={{ margin: 0 }}>
+                    <label className="form-label">পাসের হার (%)</label>
+                    <input type="text" className="form-input" value={passRate} onChange={(e) => setPassRate(e.target.value)} placeholder="৯৮" />
+                  </div>
+                  <div className="form-group" style={{ margin: 0 }}>
+                    <label className="form-label">গৌরবময় ঐতিহ্য (+)</label>
+                    <input type="text" className="form-input" value={experienceYears} onChange={(e) => setExperienceYears(e.target.value)} placeholder="২৫" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Hero Banner Text */}
+              <div style={{ marginBottom: '24px', paddingTop: '16px', borderTop: '1px solid #f1f5f9' }}>
+                <h4 style={{ fontSize: '13px', fontWeight: 700, color: '#1b365d', marginBottom: '12px' }}>
+                  হিরো সেকশন বার্তা ও শিরোনাম
+                </h4>
+                <div className="form-group">
+                  <label className="form-label">হিরো ট্যাগ / ব্যাজ টেক্সট</label>
+                  <input type="text" className="form-input" value={heroBadge} onChange={(e) => setHeroBadge(e.target.value)} placeholder="যেমন: ২০২৬ শিক্ষাবর্ষের ভর্তি কার্যক্রম শুরু" />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">হিরো প্রধান শিরোনাম</label>
+                  <input type="text" className="form-input" value={heroTitle} onChange={(e) => setHeroTitle(e.target.value)} placeholder="মেধা, শৃঙ্খলা ও উন্নত ভবিষ্যতের সঠিক দিশারী" />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">হিরো সংক্ষিপ্ত উপ-শিরোনাম</label>
+                  <textarea className="form-textarea" rows={2} value={heroSubtitle} onChange={(e) => setHeroSubtitle(e.target.value)} placeholder="পরিচিতিমূলক সংক্ষিপ্ত বার্তা..." />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">
+                    <Megaphone size={12} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />
+                    জরুরী ঘোষণা / অ্যালার্ট বক্স বার্তা
+                  </label>
+                  <textarea className="form-textarea" rows={2} value={announcement} onChange={(e) => setAnnouncement(e.target.value)} placeholder="জরুরী কোনো ঘোষণা থাকলে লিখুন..." />
+                </div>
+              </div>
+
+              {/* Live Preview */}
+              <div style={{ padding: '16px', background: '#0f1d38', borderRadius: '12px', color: '#fff' }}>
+                <p style={{ fontSize: '11px', fontWeight: 700, color: '#c59b27', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 12px' }}>হোমপেইজ পরিসংখ্যান প্রিভিউ</p>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', textAlign: 'center' }}>
+                  <div style={{ background: 'rgba(255,255,255,0.06)', padding: '12px', borderRadius: '8px' }}>
+                    <div style={{ fontSize: '22px', fontWeight: 800, color: '#c59b27' }}>{studentCount}+</div>
+                    <div style={{ fontSize: '11px', color: '#94a3b8' }}>বর্তমান শিক্ষার্থী</div>
+                  </div>
+                  <div style={{ background: 'rgba(255,255,255,0.06)', padding: '12px', borderRadius: '8px' }}>
+                    <div style={{ fontSize: '22px', fontWeight: 800, color: '#c59b27' }}>{teacherCount}+</div>
+                    <div style={{ fontSize: '11px', color: '#94a3b8' }}>অভিজ্ঞ শিক্ষক</div>
+                  </div>
+                  <div style={{ background: 'rgba(255,255,255,0.06)', padding: '12px', borderRadius: '8px' }}>
+                    <div style={{ fontSize: '22px', fontWeight: 800, color: '#c59b27' }}>{passRate}%</div>
+                    <div style={{ fontSize: '11px', color: '#94a3b8' }}>পাসের হার</div>
+                  </div>
+                  <div style={{ background: 'rgba(255,255,255,0.06)', padding: '12px', borderRadius: '8px' }}>
+                    <div style={{ fontSize: '22px', fontWeight: 800, color: '#c59b27' }}>{experienceYears}+</div>
+                    <div style={{ fontSize: '11px', color: '#94a3b8' }}>বছরের ঐতিহ্য</div>
+                  </div>
                 </div>
               </div>
             </div>

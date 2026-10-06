@@ -73,6 +73,10 @@ export async function updateSchoolSettingsAction(formData: {
     motto?: string;
     principal_message?: string;
     principal_name?: string;
+    hero_badge?: string;
+    hero_title?: string;
+    hero_subtitle?: string;
+    announcement?: string;
     stats?: any[];
   };
 }): Promise<SettingsActionState> {
