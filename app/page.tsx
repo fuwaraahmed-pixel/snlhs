@@ -42,13 +42,29 @@ export default async function PublicHomePage() {
   try {
     const supabase = createPublicClient();
 
-    // 1. Fetch School Settings
-    const { data: schoolData } = await supabase
-      .from('schools')
-      .select('name, phone, email, address, settings')
-      .limit(1)
-      .maybeSingle();
+    // Fetch School Settings, Latest Notices, and Upcoming Events concurrently
+    const [schoolRes, noticesRes, eventsRes] = await Promise.all([
+      supabase
+        .from('schools')
+        .select('name, phone, email, address, settings')
+        .eq('slug', 'snlhs')
+        .limit(1)
+        .maybeSingle(),
+      supabase
+        .from('notices')
+        .select('id, title, description, category, pub_date, is_important')
+        .eq('is_published', true)
+        .order('pub_date', { ascending: false })
+        .limit(4),
+      supabase
+        .from('events')
+        .select('id, title, description, event_date, location, featured_image, is_featured')
+        .eq('is_published', true)
+        .order('event_date', { ascending: false })
+        .limit(3),
+    ]);
 
+    const schoolData = schoolRes.data;
     if (schoolData) {
       const st = (schoolData.settings as Record<string, any>) || {};
       schoolInfo.name = schoolData.name || schoolInfo.name;
@@ -78,28 +94,12 @@ export default async function PublicHomePage() {
       }
     }
 
-    // 2. Fetch Latest Published Notices (Top 4)
-    const { data: noticesData } = await supabase
-      .from('notices')
-      .select('id, title, description, category, pub_date, is_important')
-      .eq('is_published', true)
-      .order('pub_date', { ascending: false })
-      .limit(4);
-
-    if (noticesData) {
-      recentNotices = noticesData;
+    if (noticesRes.data) {
+      recentNotices = noticesRes.data;
     }
 
-    // 3. Fetch Latest Published Events (Top 3)
-    const { data: eventsData } = await supabase
-      .from('events')
-      .select('id, title, description, event_date, location, featured_image, is_featured')
-      .eq('is_published', true)
-      .order('event_date', { ascending: false })
-      .limit(3);
-
-    if (eventsData) {
-      recentEvents = eventsData;
+    if (eventsRes.data) {
+      recentEvents = eventsRes.data;
     }
   } catch (err) {
     console.error('Error fetching homepage data:', err);
@@ -131,6 +131,38 @@ export default async function PublicHomePage() {
 
   return (
     <div style={{ fontFamily: 'var(--font-bengali), var(--font-english)', minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: '#f8fafc' }}>
+      {/* Schema.org JSON-LD — EducationalOrganization structured data for Google Search */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'EducationalOrganization',
+            name: schoolInfo.name,
+            alternateName: 'SNLHS',
+            url: process.env.NEXT_PUBLIC_SITE_URL || 'https://snlhs.edu.bd',
+            logo: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://snlhs.edu.bd'}/logo.png`,
+            description: schoolInfo.hero_subtitle,
+            foundingDate: '1998',
+            address: {
+              '@type': 'PostalAddress',
+              streetAddress: schoolInfo.address,
+              addressLocality: 'ভালুকা',
+              addressRegion: 'ময়মনসিংহ',
+              addressCountry: 'BD',
+            },
+            contactPoint: {
+              '@type': 'ContactPoint',
+              telephone: schoolInfo.phone,
+              email: schoolInfo.email,
+              contactType: 'customer service',
+              availableLanguage: ['Bengali', 'English'],
+            },
+            sameAs: [],
+          }),
+        }}
+      />
+
       {/* 01. Dynamic Responsive Navigation Header */}
       <Navbar activePage="home" schoolName={schoolInfo.name} />
 

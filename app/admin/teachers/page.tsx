@@ -12,6 +12,7 @@ import {
   deleteTeacherAction,
   toggleTeacherPublishAction,
 } from '@/lib/actions/teachers-actions';
+import DeleteConfirmModal from '@/components/DeleteConfirmModal';
 import { uploadTeacherPhotoAction } from '@/lib/actions/upload-actions';
 
 const DEPT_COLORS: Record<string, { bg: string; color: string; border: string }> = {
@@ -40,6 +41,11 @@ export default function TeacherManagementPage() {
   const [photoUploading, setPhotoUploading] = useState(false);
   const [photoUploadError, setPhotoUploadError] = useState<string | null>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
+
+  // Delete modal state
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [teacherToDelete, setTeacherToDelete] = useState<any | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const [name, setName] = useState('');
   const [designation, setDesignation] = useState('');
@@ -101,11 +107,25 @@ export default function TeacherManagementPage() {
     setSubmitting(false);
   };
 
-  const handleDelete = async (id: string) => {
-    if (confirm('এই শিক্ষকের প্রোফাইল মুছে ফেলবেন?')) {
-      const res = await deleteTeacherAction(id);
-      if (res.success) { setActionSuccess('প্রোফাইল মুছে ফেলা হয়েছে।'); setTimeout(() => setActionSuccess(null), 4000); await loadTeachers(); }
-      else setActionError(res.error || 'মুছতে ব্যর্থ');
+  const promptDelete = (teacher: any) => {
+    setTeacherToDelete(teacher);
+    setDeleteModalOpen(true);
+  };
+
+  const confirmDeleteTeacher = async () => {
+    if (!teacherToDelete) return;
+    setIsDeleting(true);
+    setActionError(null);
+    const res = await deleteTeacherAction(teacherToDelete.id);
+    setIsDeleting(false);
+    setDeleteModalOpen(false);
+    if (res.success) {
+      setActionSuccess('প্রোফাইল মুছে ফেলা হয়েছে।');
+      setTeacherToDelete(null);
+      setTimeout(() => setActionSuccess(null), 4000);
+      await loadTeachers();
+    } else {
+      setActionError(res.error || 'মুছতে ব্যর্থ');
     }
   };
 
@@ -241,7 +261,7 @@ export default function TeacherManagementPage() {
                         <button className="action-btn edit" onClick={() => handleOpenModal(t)} title="এডিট">
                           <Edit3 size={16} />
                         </button>
-                        <button className="action-btn delete" onClick={() => handleDelete(t.id)} title="মুছুন">
+                        <button className="action-btn delete" onClick={() => promptDelete(t)} title="মুছুন">
                           <Trash2 size={16} />
                         </button>
                       </div>
@@ -369,6 +389,21 @@ export default function TeacherManagementPage() {
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmModal
+        isOpen={deleteModalOpen}
+        title="শিক্ষকের প্রোফাইল মুছে ফেলার নিশ্চিতকরণ"
+        itemName={teacherToDelete?.name}
+        message="আপনি কি নিশ্চিত যে এই শিক্ষকের প্রোফাইল মুছে ফেলতে চান? সংশ্লিষ্ট প্রোফাইল ছবি ও তথ্য স্থায়ীভাবে মুছে যাবে।"
+        isDeleting={isDeleting}
+        onConfirm={confirmDeleteTeacher}
+        onCancel={() => {
+          setDeleteModalOpen(false);
+          setTeacherToDelete(null);
+        }}
+      />
     </div>
   );
 }
+

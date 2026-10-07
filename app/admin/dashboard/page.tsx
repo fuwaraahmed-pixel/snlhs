@@ -1,41 +1,72 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Bell, Users, Calendar, Image as ImageIcon, PlusCircle, ArrowRight, TrendingUp } from 'lucide-react';
+import {
+  Bell,
+  Users,
+  Calendar,
+  Image as ImageIcon,
+  ArrowRight,
+  TrendingUp,
+  Loader2,
+  RefreshCw,
+  AlertCircle,
+} from 'lucide-react';
+import { getAdminDashboardStats, DashboardStats } from '@/lib/actions/dashboard-actions';
 
 export default function AdminDashboardPage() {
+  const [statsData, setStatsData] = useState<DashboardStats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  const fetchStats = async () => {
+    setLoading(true);
+    setErrorMsg(null);
+    const res = await getAdminDashboardStats();
+    if (res.error) {
+      setErrorMsg(res.error);
+    } else if (res.stats) {
+      setStatsData(res.stats);
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    fetchStats();
+  }, []);
+
   const stats = [
     {
       title: 'মোট নোটিশ',
-      count: 12,
+      count: statsData?.noticesCount ?? 0,
       icon: Bell,
       iconBg: '#eff6ff',
       iconColor: '#1b365d',
-      trend: '+2 এই সপ্তাহে',
+      trend: 'সক্রিয় নোটিশ',
       href: '/admin/notices',
     },
     {
       title: 'শিক্ষক ও স্টাফ',
-      count: 24,
+      count: statsData?.teachersCount ?? 0,
       icon: Users,
       iconBg: '#fffbeb',
       iconColor: '#c59b27',
-      trend: 'সক্রিয় সদস্য',
+      trend: 'তালিকাভুক্ত শিক্ষক',
       href: '/admin/teachers',
     },
     {
-      title: 'আসন্ন ইভেন্ট',
-      count: 5,
+      title: 'ইভেন্টসমূহ',
+      count: statsData?.eventsCount ?? 0,
       icon: Calendar,
       iconBg: '#f0fdf4',
       iconColor: '#15803d',
-      trend: 'পরবর্তী ৩০ দিনে',
+      trend: 'স্কুল ইভেন্ট',
       href: '/admin/events',
     },
     {
       title: 'গ্যালারি অ্যালবাম',
-      count: 8,
+      count: statsData?.albumsCount ?? 0,
       icon: ImageIcon,
       iconBg: '#faf5ff',
       iconColor: '#7c3aed',
@@ -51,54 +82,113 @@ export default function AdminDashboardPage() {
     { label: 'নতুন অ্যালবাম', href: '/admin/gallery', icon: ImageIcon, color: '#7c3aed', bg: '#faf5ff' },
   ];
 
-  const recentNotices = [
-    { date: '১৫ আগস্ট ২০২৬', title: 'বার্ষিক ক্রীড়া প্রতিযোগিতা ২০২৬ সংক্রান্ত বিজ্ঞপ্তি', category: 'ইভেন্ট', published: true },
-    { date: '১০ আগস্ট ২০২৬', title: 'অর্ধ-বার্ষিক পরীক্ষা ২০২৬ এর সময়সূচী', category: 'পরীক্ষা', published: true },
-    { date: '০৫ আগস্ট ২০২৬', title: 'নতুন শিক্ষাবর্ষে ভর্তি সংক্রান্ত বিজ্ঞপ্তি', category: 'ভর্তি', published: false },
-  ];
-
   return (
     <div>
       {/* Welcome Banner */}
-      <div style={{
-        background: 'linear-gradient(135deg, #0f1d38 0%, #1b365d 50%, #25477b 100%)',
-        borderRadius: '16px',
-        padding: '28px 32px',
-        marginBottom: '24px',
-        position: 'relative',
-        overflow: 'hidden',
-      }}>
+      <div
+        style={{
+          background: 'linear-gradient(135deg, #0f1d38 0%, #1b365d 50%, #25477b 100%)',
+          borderRadius: '16px',
+          padding: '28px 32px',
+          marginBottom: '24px',
+          position: 'relative',
+          overflow: 'hidden',
+        }}
+      >
         {/* Decorative circles */}
-        <div style={{
-          position: 'absolute', right: '-30px', top: '-30px',
-          width: '160px', height: '160px',
-          borderRadius: '50%', background: 'rgba(255,255,255,0.04)',
-          pointerEvents: 'none',
-        }} />
-        <div style={{
-          position: 'absolute', right: '80px', bottom: '-50px',
-          width: '120px', height: '120px',
-          borderRadius: '50%', background: 'rgba(197,155,39,0.08)',
-          pointerEvents: 'none',
-        }} />
-        <div style={{ position: 'relative', zIndex: 1 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
-            <div style={{
-              background: 'rgba(197,155,39,0.2)', border: '1px solid rgba(197,155,39,0.4)',
-              borderRadius: '9999px', padding: '3px 12px',
-              fontSize: '11px', fontWeight: 700, color: '#e8b84b', letterSpacing: '0.07em'
-            }}>
-              ADMIN DASHBOARD
+        <div
+          style={{
+            position: 'absolute',
+            right: '-30px',
+            top: '-30px',
+            width: '160px',
+            height: '160px',
+            borderRadius: '50%',
+            background: 'rgba(255,255,255,0.04)',
+            pointerEvents: 'none',
+          }}
+        />
+        <div
+          style={{
+            position: 'absolute',
+            right: '80px',
+            bottom: '-50px',
+            width: '120px',
+            height: '120px',
+            borderRadius: '50%',
+            background: 'rgba(197,155,39,0.08)',
+            pointerEvents: 'none',
+          }}
+        />
+        <div style={{ position: 'relative', zIndex: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '14px' }}>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+              <div
+                style={{
+                  background: 'rgba(197,155,39,0.2)',
+                  border: '1px solid rgba(197,155,39,0.4)',
+                  borderRadius: '9999px',
+                  padding: '3px 12px',
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  color: '#e8b84b',
+                  letterSpacing: '0.07em',
+                }}
+              >
+                ADMIN DASHBOARD
+              </div>
             </div>
+            <h2 style={{ fontSize: '22px', color: '#fff', fontWeight: 800, margin: '0 0 6px', letterSpacing: '-0.01em' }}>
+              স্বাগতম, অ্যাডমিন! 👋
+            </h2>
+            <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '13.5px', margin: 0, fontWeight: 400 }}>
+              সাহেরা নায়েব ল্যাবরেটরি হাই স্কুলের নোটিশ, শিক্ষক, ইভেন্ট ও গ্যালারি পরিচালনা করুন।
+            </p>
           </div>
-          <h2 style={{ fontSize: '22px', color: '#fff', fontWeight: 800, margin: '0 0 6px', letterSpacing: '-0.01em' }}>
-            স্বাগতম, অ্যাডমিন! 👋
-          </h2>
-          <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '13.5px', margin: 0, fontWeight: 400 }}>
-            সাহেরা নায়েব ল্যাবরেটরি হাই স্কুলের নোটিশ, শিক্ষক, ইভেন্ট ও গ্যালারি পরিচালনা করুন।
-          </p>
+
+          <button
+            onClick={fetchStats}
+            disabled={loading}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              backgroundColor: 'rgba(255, 255, 255, 0.1)',
+              color: '#ffffff',
+              border: '1px solid rgba(255, 255, 255, 0.2)',
+              borderRadius: '8px',
+              padding: '8px 14px',
+              fontSize: '13px',
+              fontWeight: 600,
+              cursor: loading ? 'not-allowed' : 'pointer',
+              transition: 'background-color 0.2s',
+            }}
+          >
+            <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+            <span>রিফ্রেশ</span>
+          </button>
         </div>
       </div>
+
+      {errorMsg && (
+        <div
+          style={{
+            backgroundColor: '#fee2e2',
+            color: '#b91c1c',
+            border: '1px solid #f87171',
+            borderRadius: '10px',
+            padding: '12px 16px',
+            marginBottom: '20px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            fontSize: '14px',
+          }}
+        >
+          <AlertCircle size={18} />
+          <span>{errorMsg}</span>
+        </div>
+      )}
 
       {/* Stats Grid */}
       <div className="admin-stats-grid">
@@ -110,7 +200,9 @@ export default function AdminDashboardPage() {
                 <Icon size={22} color={item.iconColor} />
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <span className="stat-value">{item.count}</span>
+                <span className="stat-value">
+                  {loading ? <Loader2 size={20} className="animate-spin" color="#1b365d" /> : item.count}
+                </span>
                 <span className="stat-label">{item.title}</span>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '4px' }}>
                   <TrendingUp size={11} color="#22c55e" />
@@ -123,10 +215,10 @@ export default function AdminDashboardPage() {
       </div>
 
       {/* Quick Actions + Recent Notices */}
-      <div style={{ display: 'grid', gridTemplateColumns: '300px 1fr', gap: '20px', alignItems: 'start' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px', alignItems: 'start', marginTop: '24px' }}>
         {/* Quick Actions */}
         <div className="admin-card" style={{ padding: '20px' }}>
-          <h3 style={{ fontSize: '14px', fontWeight: 700, color: '#0f1d38', marginBottom: '14px', margin: '0 0 14px' }}>
+          <h3 style={{ fontSize: '14px', fontWeight: 700, color: '#0f1d38', margin: '0 0 14px' }}>
             দ্রুত অ্যাকশন
           </h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -147,21 +239,28 @@ export default function AdminDashboardPage() {
                     transition: 'transform 0.15s, box-shadow 0.15s',
                     border: '1px solid transparent',
                   }}
-                  onMouseEnter={e => {
+                  onMouseEnter={(e) => {
                     (e.currentTarget as HTMLElement).style.transform = 'translateX(3px)';
                     (e.currentTarget as HTMLElement).style.boxShadow = '0 3px 10px rgba(0,0,0,0.07)';
                   }}
-                  onMouseLeave={e => {
+                  onMouseLeave={(e) => {
                     (e.currentTarget as HTMLElement).style.transform = 'translateX(0)';
                     (e.currentTarget as HTMLElement).style.boxShadow = 'none';
                   }}
                 >
-                  <div style={{
-                    width: '34px', height: '34px', borderRadius: '9px',
-                    background: '#fff', display: 'flex', alignItems: 'center',
-                    justifyContent: 'center', flexShrink: 0,
-                    boxShadow: '0 1px 4px rgba(0,0,0,0.08)',
-                  }}>
+                  <div
+                    style={{
+                      width: '34px',
+                      height: '34px',
+                      borderRadius: '9px',
+                      background: '#fff',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                      boxShadow: '0 1px 4px rgba(0,0,0,0.08)',
+                    }}
+                  >
                     <Icon size={16} color={action.color} />
                   </div>
                   <span style={{ fontSize: '13px', fontWeight: 600, color: '#0f1d38' }}>
@@ -175,19 +274,27 @@ export default function AdminDashboardPage() {
         </div>
 
         {/* Recent Notices */}
-        <div>
-          <div style={{
-            display: 'flex', justifyContent: 'space-between',
-            alignItems: 'center', marginBottom: '14px',
-          }}>
+        <div className="admin-card" style={{ padding: '20px' }}>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '14px',
+            }}
+          >
             <h3 style={{ fontSize: '15px', fontWeight: 700, color: '#0f1d38', margin: 0 }}>
               সাম্প্রতিক নোটিশ
             </h3>
             <Link
               href="/admin/notices"
               style={{
-                fontSize: '12px', color: '#1b365d', fontWeight: 600,
-                display: 'inline-flex', alignItems: 'center', gap: '4px',
+                fontSize: '12px',
+                color: '#1b365d',
+                fontWeight: 600,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px',
                 textDecoration: 'none',
               }}
             >
@@ -206,22 +313,39 @@ export default function AdminDashboardPage() {
                 </tr>
               </thead>
               <tbody>
-                {recentNotices.map((n, i) => (
-                  <tr key={i}>
-                    <td style={{ whiteSpace: 'nowrap', color: '#64748b', fontSize: '12px' }}>{n.date}</td>
-                    <td style={{ fontWeight: 500, color: '#0f1d38', maxWidth: '260px' }}>{n.title}</td>
-                    <td>
-                      <span className={`badge ${n.category === 'ইভেন্ট' ? 'badge-event' : n.category === 'পরীক্ষা' ? 'badge-exam' : 'badge-admission'}`}>
-                        {n.category}
-                      </span>
-                    </td>
-                    <td>
-                      <span className={`badge ${n.published ? 'badge-published' : 'badge-draft'}`}>
-                        {n.published ? 'প্রকাশিত' : 'খসড়া'}
-                      </span>
+                {loading ? (
+                  <tr>
+                    <td colSpan={4} style={{ textAlign: 'center', padding: '24px', color: '#64748b' }}>
+                      <Loader2 size={20} className="animate-spin" style={{ margin: '0 auto 6px' }} />
+                      <span>ডাটা লোড হচ্ছে...</span>
                     </td>
                   </tr>
-                ))}
+                ) : !statsData || statsData.recentNotices.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} style={{ textAlign: 'center', padding: '24px', color: '#64748b' }}>
+                      বর্তমানে কোনো নোটিশ নেই।
+                    </td>
+                  </tr>
+                ) : (
+                  statsData.recentNotices.map((n) => (
+                    <tr key={n.id}>
+                      <td style={{ whiteSpace: 'nowrap', color: '#64748b', fontSize: '12px' }}>{n.date}</td>
+                      <td style={{ fontWeight: 500, color: '#0f1d38', maxWidth: '240px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {n.title}
+                      </td>
+                      <td>
+                        <span className={`badge ${n.category === 'ইভেন্ট' ? 'badge-event' : n.category === 'পরীক্ষা' ? 'badge-exam' : 'badge-admission'}`}>
+                          {n.category}
+                        </span>
+                      </td>
+                      <td>
+                        <span className={`badge ${n.published ? 'badge-published' : 'badge-draft'}`}>
+                          {n.published ? 'প্রকাশিত' : 'খসড়া'}
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>

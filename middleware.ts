@@ -68,7 +68,12 @@ export async function middleware(request: NextRequest) {
   if (user && isPublicAdminRoute) {
     const url = request.nextUrl.clone();
     url.pathname = '/admin/dashboard';
-    return response; // Use response instead of redirect to allow smooth session preservation
+    const redirectResponse = NextResponse.redirect(url);
+    // Copy any renewed cookies from response to redirectResponse
+    response.cookies.getAll().forEach((cookie) => {
+      redirectResponse.cookies.set(cookie.name, cookie.value, cookie);
+    });
+    return redirectResponse;
   }
 
   return response;

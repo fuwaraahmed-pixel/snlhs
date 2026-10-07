@@ -13,6 +13,7 @@ import {
   toggleEventPublishAction,
 } from '@/lib/actions/events-actions';
 import { uploadEventImageAction } from '@/lib/actions/upload-actions';
+import DeleteConfirmModal from '@/components/DeleteConfirmModal';
 
 function formatEventDate(dateStr: string) {
   if (!dateStr) return '—';
@@ -32,6 +33,11 @@ export default function EventsManagementPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+
+  // Delete modal state
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [eventToDelete, setEventToDelete] = useState<any | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const [title, setTitle] = useState('');
   const [eventDate, setEventDate] = useState('');
@@ -91,11 +97,25 @@ export default function EventsManagementPage() {
     setSubmitting(false);
   };
 
-  const handleDelete = async (id: string) => {
-    if (confirm('এই ইভেন্টটি মুছে ফেলবেন?')) {
-      const res = await deleteEventAction(id);
-      if (res.success) { setActionSuccess('ইভেন্ট মুছে ফেলা হয়েছে।'); setTimeout(() => setActionSuccess(null), 4000); await loadEvents(); }
-      else setActionError(res.error || 'মুছতে ব্যর্থ');
+  const promptDelete = (ev: any) => {
+    setEventToDelete(ev);
+    setDeleteModalOpen(true);
+  };
+
+  const confirmDeleteEvent = async () => {
+    if (!eventToDelete) return;
+    setIsDeleting(true);
+    setActionError(null);
+    const res = await deleteEventAction(eventToDelete.id);
+    setIsDeleting(false);
+    setDeleteModalOpen(false);
+    if (res.success) {
+      setActionSuccess('ইভেন্ট মুছে ফেলা হয়েছে।');
+      setEventToDelete(null);
+      setTimeout(() => setActionSuccess(null), 4000);
+      await loadEvents();
+    } else {
+      setActionError(res.error || 'মুছতে ব্যর্থ');
     }
   };
 
@@ -223,7 +243,7 @@ export default function EventsManagementPage() {
                     <td>
                       <div style={{ display: 'flex', gap: '4px', justifyContent: 'flex-end' }}>
                         <button className="action-btn edit" onClick={() => handleOpenModal(ev)} title="এডিট"><Edit3 size={16} /></button>
-                        <button className="action-btn delete" onClick={() => handleDelete(ev.id)} title="মুছুন"><Trash2 size={16} /></button>
+                        <button className="action-btn delete" onClick={() => promptDelete(ev)} title="মুছুন"><Trash2 size={16} /></button>
                       </div>
                     </td>
                   </tr>
@@ -320,6 +340,21 @@ export default function EventsManagementPage() {
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmModal
+        isOpen={deleteModalOpen}
+        title="ইভেন্ট মুছে ফেলার নিশ্চিতকরণ"
+        itemName={eventToDelete?.title}
+        message="আপনি কি নিশ্চিত যে এই অনুষ্ঠানটি মুছে ফেলতে চান? এটি পোর্টাল থেকে স্থায়ীভাবে মুছে যাবে।"
+        isDeleting={isDeleting}
+        onConfirm={confirmDeleteEvent}
+        onCancel={() => {
+          setDeleteModalOpen(false);
+          setEventToDelete(null);
+        }}
+      />
     </div>
   );
 }
+

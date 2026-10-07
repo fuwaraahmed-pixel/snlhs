@@ -1,10 +1,20 @@
 import React from 'react';
+import { Metadata } from 'next';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { createPublicClient } from '@/lib/db/supabase-public';
 
 export const revalidate = 60;
+
+export const metadata: Metadata = {
+  title: 'ফটো গ্যালারি | সাহেরা নায়েব ল্যাবরেটরি হাই স্কুল',
+  description: 'সাহেরা নায়েব ল্যাবরেটরি হাই স্কুলের বিভিন্ন অনুষ্ঠান, ক্যাম্পাসের দৃশ্য ও স্মরণীয় মুহূর্তের ছবির অ্যালবাম।',
+  openGraph: {
+    title: 'ফটো গ্যালারি ও চিত্রশালা | সাহেরা নায়েব ল্যাবরেটরি হাই স্কুল',
+    description: 'বিদ্যালয়ের বিভিন্ন স্মৃতিময় মুহূর্তের আলোকচিত্র সংগ্রহ।',
+  },
+};
 
 interface GalleryImage {
   id: string;

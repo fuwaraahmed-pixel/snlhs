@@ -1,4 +1,5 @@
 import React from 'react';
+import { Metadata } from 'next';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -6,26 +7,61 @@ import { createPublicClient } from '@/lib/db/supabase-public';
 
 export const revalidate = 60;
 
+export const metadata: Metadata = {
+  title: 'ইভেন্ট ও অনুষ্ঠানমালা | সাহেরা নায়েব ল্যাবরেটরি হাই স্কুল',
+  description: 'সাহেরা নায়েব ল্যাবরেটরি হাই স্কুলের বিভিন্ন সহশিক্ষা কার্যক্রম, ক্রীড়া প্রতিযোগিতা ও সাংস্কৃতিক অনুষ্ঠান।',
+  openGraph: {
+    title: 'ইভেন্ট ও অনুষ্ঠান | সাহেরা নায়েব ল্যাবরেটরি হাই স্কুল',
+    description: 'বিদ্যালয়ের বিভিন্ন সাংস্কৃতিক, জাতীয় ও ক্রীড়া উৎসবের তথ্যাবলী।',
+  },
+};
+
+interface EventItem {
+  id: string;
+  title: string;
+  description?: string | null;
+  event_date: string;
+  location?: string | null;
+  featured_image?: string | null;
+  is_featured?: boolean;
+}
+
 export default async function PublicEventsPage() {
-  let events: any[] = [];
+  let events: EventItem[] = [];
   let schoolName = 'সাহেরা নায়েব ল্যাবরেটরি হাই স্কুল';
+  let schoolId: string | null = null;
   let fetchError: string | null = null;
 
   try {
     const supabase = createPublicClient();
 
+    // Step 1: Fetch school info first to get school_id for filtering
     const { data: schoolData } = await supabase
       .from('schools')
-      .select('name')
+      .select('id, name')
+      .eq('slug', 'snlhs')
       .limit(1)
-      .single();
-    if (schoolData?.name) schoolName = schoolData.name;
+      .maybeSingle();
 
-    const { data, error } = await supabase
+    if (schoolData) {
+      schoolName = schoolData.name || schoolName;
+      schoolId = schoolData.id;
+    }
+
+    // Step 2: Fetch events filtered by school_id with a reasonable limit
+    const eventsQuery = supabase
       .from('events')
       .select('id, title, description, event_date, location, featured_image, is_featured')
       .eq('is_published', true)
-      .order('event_date', { ascending: false });
+      .order('event_date', { ascending: false })
+      .limit(30);
+
+    // Apply school_id filter if available
+    if (schoolId) {
+      eventsQuery.eq('school_id', schoolId);
+    }
+
+    const { data, error } = await eventsQuery;
 
     if (error) {
       console.error('Events fetch error:', error.message);

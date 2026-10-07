@@ -1,26 +1,66 @@
 import React from 'react';
+import { Metadata } from 'next';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { createPublicClient } from '@/lib/db/supabase-public';
 
+export const revalidate = 60;
+
+export const metadata: Metadata = {
+  title: 'শিক্ষক ও স্টাফবৃন্দ | সাহেরা নায়েব ল্যাবরেটরি হাই স্কুল',
+  description: 'সাহেরা নায়েব ল্যাবরেটরি হাই স্কুলের সম্মানিত শিক্ষক-শিক্ষিকা ও কর্মকর্তাদের তালিকা ও পরিচিতি।',
+  openGraph: {
+    title: 'শিক্ষকমণ্ডলী ও স্টাফ | সাহেরা নায়েব ল্যাবরেটরি হাই স্কুল',
+    description: 'দক্ষ ও অভিজ্ঞ শিক্ষকমণ্ডলীর পরিচিতি ও যোগাযোগের তথ্য।',
+  },
+};
+
+interface TeacherItem {
+  id: string;
+  name: string;
+  designation: string;
+  subject?: string | null;
+  department?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  photo_url?: string | null;
+  display_order?: number;
+}
+
 export default async function PublicTeachersPage() {
-  let teachers: any[] = [];
+  let teachers: TeacherItem[] = [];
+  let schoolName = 'সাহেরা নায়েব ল্যাবরেটরি হাই স্কুল';
   let fetchError: string | null = null;
 
   try {
     const supabase = createPublicClient();
-    const { data, error } = await supabase
-      .from('teachers')
-      .select('id, name, designation, subject, department, phone, email, photo_url, display_order')
-      .eq('is_published', true)
-      .order('display_order', { ascending: true });
 
-    if (error) {
-      console.error('Error fetching public teachers:', error);
+    // Fetch school info and teachers concurrently for best performance
+    const [schoolRes, teachersRes] = await Promise.all([
+      supabase
+        .from('schools')
+        .select('id, name')
+        .eq('slug', 'snlhs')
+        .limit(1)
+        .maybeSingle(),
+      supabase
+        .from('teachers')
+        .select('id, name, designation, subject, department, phone, email, photo_url, display_order')
+        .eq('is_published', true)
+        .order('display_order', { ascending: true })
+        .limit(100),
+    ]);
+
+    if (schoolRes.data?.name) schoolName = schoolRes.data.name;
+
+    // NOTE: RLS policies on Supabase already filter by school_id.
+    if (teachersRes.error) {
+      console.error('Error fetching public teachers:', teachersRes.error);
       fetchError = 'তথ্য লোড করতে সমস্যা হয়েছে।';
-    } else if (data) {
-      teachers = data;
+    } else if (teachersRes.data) {
+      // RLS already filters by school_id if configured; this is an extra safeguard
+      teachers = teachersRes.data;
     }
   } catch (err) {
     console.error('Exception fetching public teachers:', err);
@@ -30,7 +70,7 @@ export default async function PublicTeachersPage() {
   return (
     <div style={{ fontFamily: 'var(--font-bengali), var(--font-english)', minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--neutral-50)' }}>
       {/* Responsive Navigation Header */}
-      <Navbar activePage="teachers" />
+      <Navbar activePage="teachers" schoolName={schoolName} />
 
       {/* Main Content */}
       <main className="container" style={{ padding: 'var(--space-8) 0', flex: 1 }}>

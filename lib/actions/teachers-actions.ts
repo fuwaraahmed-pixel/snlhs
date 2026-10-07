@@ -191,6 +191,14 @@ export async function deleteTeacherAction(id: string): Promise<TeacherActionStat
       return { success: false, error: authError || 'অনুমতি নেই' };
     }
 
+    // First fetch the record to check if it has a photo to clean up
+    const { data: teacherToDel } = await supabase
+      .from('teachers')
+      .select('photo_url')
+      .eq('id', id)
+      .eq('school_id', profile.school_id)
+      .maybeSingle();
+
     const { data, error } = await supabase
       .from('teachers')
       .delete()
@@ -204,6 +212,19 @@ export async function deleteTeacherAction(id: string): Promise<TeacherActionStat
 
     if (!data || data.length === 0) {
       return { success: false, error: 'শিক্ষক তথ্য পাওয়া যায়নি বা এটি আপনার স্কুলের নয়।' };
+    }
+
+    // If teacher had a stored photo, remove it from teacher-images storage bucket
+    if (teacherToDel?.photo_url) {
+      try {
+        const { extractStoragePath } = await import('../storage/cleanup');
+        const storagePath = extractStoragePath(teacherToDel.photo_url, 'teacher-images');
+        if (storagePath) {
+          await supabase.storage.from('teacher-images').remove([storagePath]);
+        }
+      } catch (storageErr) {
+        console.warn('Could not remove teacher photo from storage:', storageErr);
+      }
     }
 
     revalidatePath('/admin/teachers');

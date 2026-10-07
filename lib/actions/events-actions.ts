@@ -186,6 +186,14 @@ export async function deleteEventAction(id: string): Promise<EventActionState> {
       return { success: false, error: authError || 'অনুমতি নেই' };
     }
 
+    // First fetch the record to check if it has a featured image to clean up
+    const { data: eventToDel } = await supabase
+      .from('events')
+      .select('featured_image')
+      .eq('id', id)
+      .eq('school_id', profile.school_id)
+      .maybeSingle();
+
     const { data, error } = await supabase
       .from('events')
       .delete()
@@ -199,6 +207,19 @@ export async function deleteEventAction(id: string): Promise<EventActionState> {
 
     if (!data || data.length === 0) {
       return { success: false, error: 'ইভেন্টটি পাওয়া যায়নি বা এটি আপনার স্কুলের নয়।' };
+    }
+
+    // If event had a stored image, remove it from event-images storage bucket
+    if (eventToDel?.featured_image) {
+      try {
+        const { extractStoragePath } = await import('../storage/cleanup');
+        const storagePath = extractStoragePath(eventToDel.featured_image, 'event-images');
+        if (storagePath) {
+          await supabase.storage.from('event-images').remove([storagePath]);
+        }
+      } catch (storageErr) {
+        console.warn('Could not remove event image from storage:', storageErr);
+      }
     }
 
     revalidatePath('/admin/events');

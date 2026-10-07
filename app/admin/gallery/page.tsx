@@ -13,6 +13,7 @@ import {
   deleteGalleryImageAction,
 } from '@/lib/actions/gallery-actions';
 import { uploadGalleryImageAction } from '@/lib/actions/upload-actions';
+import DeleteConfirmModal from '@/components/DeleteConfirmModal';
 
 export default function GalleryManagementPage() {
   const [albums, setAlbums] = useState<any[]>([]);
@@ -24,6 +25,11 @@ export default function GalleryManagementPage() {
   const [newTitle, setNewTitle] = useState('');
   const [newDescription, setNewDescription] = useState('');
   const [creating, setCreating] = useState(false);
+
+  // Delete modal state
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<{ type: 'album' | 'image'; id: string; name?: string } | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const [selectedAlbum, setSelectedAlbum] = useState<any | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -51,15 +57,49 @@ export default function GalleryManagementPage() {
     setCreating(false);
   };
 
-  const handleDeleteAlbum = async (id: string) => {
-    if (confirm('এই অ্যালবামটি মুছে ফেলবেন? সকল ছবিও মুছে যাবে।')) {
-      const res = await deleteGalleryAlbumAction(id);
+  const promptDeleteAlbum = (album: any) => {
+    setDeleteTarget({ type: 'album', id: album.id, name: album.title });
+    setDeleteModalOpen(true);
+  };
+
+  const promptDeleteImage = (imageId: string) => {
+    setDeleteTarget({ type: 'image', id: imageId, name: 'নির্বাচিত ছবি' });
+    setDeleteModalOpen(true);
+  };
+
+  const confirmDeleteTarget = async () => {
+    if (!deleteTarget) return;
+    setIsDeleting(true);
+    setActionError(null);
+
+    if (deleteTarget.type === 'album') {
+      const res = await deleteGalleryAlbumAction(deleteTarget.id);
+      setIsDeleting(false);
+      setDeleteModalOpen(false);
       if (res.success) {
-        if (selectedAlbum?.id === id) setSelectedAlbum(null);
+        if (selectedAlbum?.id === deleteTarget.id) setSelectedAlbum(null);
         setActionSuccess('অ্যালবাম মুছে ফেলা হয়েছে।');
+        setDeleteTarget(null);
         setTimeout(() => setActionSuccess(null), 4000);
         await loadAlbums();
-      } else setActionError(res.error || 'মুছতে ব্যর্থ');
+      } else {
+        setActionError(res.error || 'মুছতে ব্যর্থ');
+      }
+    } else {
+      const res = await deleteGalleryImageAction(deleteTarget.id);
+      setIsDeleting(false);
+      setDeleteModalOpen(false);
+      if (res.success && selectedAlbum) {
+        setDeleteTarget(null);
+        const updatedAlbums = await getAdminGalleryAlbums();
+        if (!updatedAlbums.error) {
+          const updated = (updatedAlbums.albums || []).find((a: any) => a.id === selectedAlbum.id);
+          if (updated) setSelectedAlbum(updated);
+          setAlbums(updatedAlbums.albums || []);
+        }
+      } else if (!res.success) {
+        setActionError(res.error || 'ছবি মুছতে ব্যর্থ');
+      }
     }
   };
 
@@ -94,18 +134,7 @@ export default function GalleryManagementPage() {
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  const handleDeleteImage = async (imageId: string) => {
-    if (!confirm('এই ছবিটি মুছে ফেলবেন?')) return;
-    const res = await deleteGalleryImageAction(imageId);
-    if (res.success && selectedAlbum) {
-      const updatedAlbums = await getAdminGalleryAlbums();
-      if (!updatedAlbums.error) {
-        const updated = (updatedAlbums.albums || []).find((a: any) => a.id === selectedAlbum.id);
-        if (updated) setSelectedAlbum(updated);
-        setAlbums(updatedAlbums.albums || []);
-      }
-    } else if (!res.success) setActionError(res.error || 'ছবি মুছতে ব্যর্থ');
-  };
+
 
   return (
     <div>
@@ -207,7 +236,7 @@ export default function GalleryManagementPage() {
                       >
                         {album.is_published ? <Eye size={13} /> : <EyeOff size={13} />}
                       </button>
-                      <button className="action-btn delete" onClick={() => handleDeleteAlbum(album.id)} title="মুছুন">
+                      <button className="action-btn delete" onClick={() => promptDeleteAlbum(album)} title="মুছুন">
                         <Trash2 size={15} />
                       </button>
                     </div>
@@ -264,7 +293,7 @@ export default function GalleryManagementPage() {
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={img.image_url} alt="gallery" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       <button
-                        onClick={() => handleDeleteImage(img.id)}
+                        onClick={() => promptDeleteImage(img.id)}
                         style={{
                           position: 'absolute', top: '5px', right: '5px',
                           background: 'rgba(220,38,38,0.88)', border: 'none',
@@ -319,6 +348,25 @@ export default function GalleryManagementPage() {
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmModal
+        isOpen={deleteModalOpen}
+        title={deleteTarget?.type === 'album' ? 'অ্যালবাম মুছে ফেলার নিশ্চিতকরণ' : 'ছবি মুছে ফেলার নিশ্চিতকরণ'}
+        itemName={deleteTarget?.name}
+        message={
+          deleteTarget?.type === 'album'
+            ? 'আপনি কি নিশ্চিত যে এই অ্যালবামটি মুছে ফেলতে চান? অ্যালবামের অন্তর্ভুক্ত সকল ছবিও মুছে যাবে।'
+            : 'আপনি কি নিশ্চিত যে এই ছবিটি মুছে ফেলতে চান? এটি স্থায়ীভাবে মুছে যাবে।'
+        }
+        isDeleting={isDeleting}
+        onConfirm={confirmDeleteTarget}
+        onCancel={() => {
+          setDeleteModalOpen(false);
+          setDeleteTarget(null);
+        }}
+      />
     </div>
   );
 }
+

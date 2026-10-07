@@ -16,6 +16,8 @@ import {
   toggleNoticePublishAction,
 } from '@/lib/actions/notices-actions';
 
+import DeleteConfirmModal from '@/components/DeleteConfirmModal';
+
 interface NoticeItem {
   id: string;
   title: string;
@@ -48,6 +50,11 @@ export default function NoticeManagementPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Delete modal state
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [noticeToDelete, setNoticeToDelete] = useState<NoticeItem | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Form states
   const [title, setTitle] = useState('');
@@ -134,12 +141,27 @@ export default function NoticeManagementPage() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('এই নোটিশটি মুছে ফেলবেন?')) return;
-    setErrorMsg(null); setSuccessMsg(null);
-    const res = await deleteNoticeAction(id);
-    if (res.success) { setSuccessMsg('নোটিশ মুছে ফেলা হয়েছে।'); loadNotices(); setTimeout(() => setSuccessMsg(null), 4000); }
-    else setErrorMsg(res.error || 'মুছতে ব্যর্থ।');
+  const promptDelete = (notice: NoticeItem) => {
+    setNoticeToDelete(notice);
+    setDeleteModalOpen(true);
+  };
+
+  const confirmDeleteNotice = async () => {
+    if (!noticeToDelete) return;
+    setIsDeleting(true);
+    setErrorMsg(null);
+    setSuccessMsg(null);
+    const res = await deleteNoticeAction(noticeToDelete.id);
+    setIsDeleting(false);
+    setDeleteModalOpen(false);
+    if (res.success) {
+      setSuccessMsg('নোটিশ মুছে ফেলা হয়েছে।');
+      setNoticeToDelete(null);
+      loadNotices();
+      setTimeout(() => setSuccessMsg(null), 4000);
+    } else {
+      setErrorMsg(res.error || 'মুছতে ব্যর্থ।');
+    }
   };
 
   const handleTogglePublish = async (id: string, currentStatus: boolean) => {
@@ -322,7 +344,7 @@ export default function NoticeManagementPage() {
                         <button className="action-btn edit" onClick={() => handleOpenModal(notice)} title="এডিট">
                           <Edit3 size={16} />
                         </button>
-                        <button className="action-btn delete" onClick={() => handleDelete(notice.id)} title="মুছুন">
+                        <button className="action-btn delete" onClick={() => promptDelete(notice)} title="মুছুন">
                           <Trash2 size={16} />
                         </button>
                       </div>
@@ -465,6 +487,21 @@ export default function NoticeManagementPage() {
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmModal
+        isOpen={deleteModalOpen}
+        title="নোটিশ মুছে ফেলার নিশ্চিতকরণ"
+        itemName={noticeToDelete?.title}
+        message="আপনি কি নিশ্চিত যে এই নোটিশটি মুছে ফেলতে চান? এটি পোর্টাল ও ডাটাবেজ থেকে স্থায়ীভাবে মুছে যাবে।"
+        isDeleting={isDeleting}
+        onConfirm={confirmDeleteNotice}
+        onCancel={() => {
+          setDeleteModalOpen(false);
+          setNoticeToDelete(null);
+        }}
+      />
     </div>
   );
 }
+

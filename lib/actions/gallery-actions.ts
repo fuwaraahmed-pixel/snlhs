@@ -175,6 +175,14 @@ export async function deleteGalleryImageAction(imageId: string): Promise<ActionR
     const { error: authError, profile, supabase } = await verifyAdminAuth();
     if (authError || !profile) return { success: false, error: authError || 'অনুমতি নেই' };
 
+    // Fetch image record first to extract image_url
+    const { data: imgToDel } = await supabase
+      .from('gallery_images')
+      .select('image_url')
+      .eq('id', imageId)
+      .eq('school_id', profile.school_id)
+      .maybeSingle();
+
     const { error } = await supabase
       .from('gallery_images')
       .delete()
@@ -182,6 +190,18 @@ export async function deleteGalleryImageAction(imageId: string): Promise<ActionR
       .eq('school_id', profile.school_id);
 
     if (error) return { success: false, error: `ছবি মুছতে ব্যর্থ: ${error.message}` };
+
+    if (imgToDel?.image_url) {
+      try {
+        const { extractStoragePath } = await import('../storage/cleanup');
+        const storagePath = extractStoragePath(imgToDel.image_url, 'gallery-images');
+        if (storagePath) {
+          await supabase.storage.from('gallery-images').remove([storagePath]);
+        }
+      } catch (storageErr) {
+        console.warn('Could not remove gallery image from storage:', storageErr);
+      }
+    }
 
     revalidatePath('/admin/gallery');
     revalidatePath('/gallery');

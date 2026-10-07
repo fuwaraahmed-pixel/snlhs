@@ -55,9 +55,13 @@ export const GalleryImageSchema = z.object({
   display_order: z.number().int().default(0),
 });
 
-const relativePathValidation = z.string().nullable().optional().refine(
-  (val) => !val || (!val.startsWith('http://') && !val.startsWith('https://')),
-  { message: 'শুধুমাত্র Relative Storage Path গ্রহণযোগ্য (http/https দেওয়া যাবে না)' }
+const imagePathOrUrlValidation = z.string().nullable().optional().refine(
+  (val) => {
+    if (!val || val.trim() === '') return true;
+    // Allow either valid URL or valid relative storage path
+    return val.startsWith('http://') || val.startsWith('https://') || !val.includes('://');
+  },
+  { message: 'সঠিক ইমেজ URL বা ফাইল পাথ প্রদান করুন' }
 );
 
 export const SchoolSettingsSchema = z.object({
@@ -67,8 +71,8 @@ export const SchoolSettingsSchema = z.object({
   address: z.string().optional(),
   phone: z.string().optional(),
   email: z.string().email('সঠিক ইমেইল লিখুন').optional().or(z.literal('')),
-  logo_url: relativePathValidation,
-  favicon_url: relativePathValidation,
+  logo_url: imagePathOrUrlValidation,
+  favicon_url: imagePathOrUrlValidation,
   settings: z.object({
     eiin: z.string().optional(),
     established: z.string().optional(),
@@ -88,3 +92,12 @@ export const SchoolSettingsSchema = z.object({
     })).optional()
   }).optional().default({})
 });
+
+export const ContactMessageSchema = z.object({
+  name: z.string().min(2, 'আপনার নাম লিখুন (কমপক্ষে ২ অক্ষর)'),
+  phone: z.string().min(11, 'সঠিক ১১ ডিজিটের মোবাইল নম্বর দিন'),
+  email: z.string().email('সঠিক ইমেইল ঠিকানা দিন').optional().or(z.literal('')),
+  subject: z.string().min(2, 'বার্তার বিষয় লিখুন'),
+  message: z.string().min(5, 'বার্তা বিস্তারিত লিখুন (কমপক্ষে ৫ অক্ষর)'),
+});
+

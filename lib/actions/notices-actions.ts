@@ -182,6 +182,14 @@ export async function deleteNoticeAction(id: string): Promise<NoticeActionState>
       return { success: false, error: authError || 'অনুমতি নেই' };
     }
 
+    // First fetch the record to check if it has an attachment to clean up
+    const { data: noticeToDel } = await supabase
+      .from('notices')
+      .select('attachment_url')
+      .eq('id', id)
+      .eq('school_id', profile.school_id)
+      .maybeSingle();
+
     const { data, error } = await supabase
       .from('notices')
       .delete()
@@ -195,6 +203,19 @@ export async function deleteNoticeAction(id: string): Promise<NoticeActionState>
 
     if (!data || data.length === 0) {
       return { success: false, error: 'নোটিশটি পাওয়া যায়নি বা এটি আপনার স্কুলের নয়।' };
+    }
+
+    // If notice had a stored attachment, remove it from notice-files storage bucket
+    if (noticeToDel?.attachment_url) {
+      try {
+        const { extractStoragePath } = await import('../storage/cleanup');
+        const storagePath = extractStoragePath(noticeToDel.attachment_url, 'notice-files');
+        if (storagePath) {
+          await supabase.storage.from('notice-files').remove([storagePath]);
+        }
+      } catch (storageErr) {
+        console.warn('Could not remove notice attachment from storage:', storageErr);
+      }
     }
 
     revalidatePath('/admin/notices');

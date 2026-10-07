@@ -1,8 +1,20 @@
 import React from 'react';
+import { Metadata } from 'next';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { createPublicClient } from '@/lib/db/supabase-public';
+
+export const revalidate = 3600;
+
+export const metadata: Metadata = {
+  title: 'আমাদের সম্পর্কে | সাহেরা নায়েব ল্যাবরেটরি হাই স্কুল',
+  description: 'সাহেরা নায়েব ল্যাবরেটরি হাই স্কুলের ইতিহাস, ঐতিহ্য, লক্ষ্য ও উদ্দেশ্য এবং প্রধান শিক্ষকের বাণী।',
+  openGraph: {
+    title: 'পরিচিতি ও ইতিহাস | সাহেরা নায়েব ল্যাবরেটরি হাই স্কুল',
+    description: 'বিদ্যালয়ের প্রতিষ্ঠা, মূলনীতি এবং প্রধান শিক্ষকের অনুপ্রেরণাদায়ী বাণী।',
+  },
+};
 
 export default async function PublicAboutPage() {
   let schoolInfo: any = {
