@@ -1,8 +1,20 @@
 import React from 'react';
+import { Metadata } from 'next';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { createPublicClient } from '@/lib/db/supabase-public';
+
+export const revalidate = 3600;
+
+export const metadata: Metadata = {
+  title: 'একাডেমিক কার্যক্রম ও পাঠ্যক্রম | সাহেরা নায়েব ল্যাবরেটরি হাই স্কুল',
+  description: 'সাহেরা নায়েব ল্যাবরেটরি হাই স্কুলের শ্রেণি বিন্যাস, পাঠদান পদ্ধতি, বিজ্ঞান-মানবিক-ব্যবসায় শিক্ষা বিভাগ এবং পরীক্ষা মূল্যায়ন সংক্রান্ত তথ্যাবলী।',
+  openGraph: {
+    title: 'একাডেমিক কার্যক্রম | সাহেরা নায়েব ল্যাবরেটরি হাই স্কুল',
+    description: 'জাতীয় শিক্ষাক্রম ও পাঠ্যপুস্তক বোর্ড (NCTB) অনুসৃত পাঠ্যক্রম ও শ্রেণি বিন্যাস।',
+  },
+};
 
 export default async function PublicAcademicsPage() {
   let schoolName = 'সাহেরা নায়েব ল্যাবরেটরি হাই স্কুল';

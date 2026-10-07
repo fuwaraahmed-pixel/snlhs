@@ -1,8 +1,20 @@
 import React from 'react';
+import { Metadata } from 'next';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { createPublicClient } from '@/lib/db/supabase-public';
+
+export const revalidate = 3600;
+
+export const metadata: Metadata = {
+  title: 'ভর্তি নির্দেশিকা ও তথ্য | সাহেরা নায়েব ল্যাবরেটরি হাই স্কুল',
+  description: 'সাহেরা নায়েব ল্যাবরেটরি হাই স্কুলের ষষ্ঠ থেকে দশম শ্রেণি পর্যন্ত ভর্তি নির্দেশিকা, প্রয়োজনীয় কাগজপত্র এবং ভর্তি ফি চার্ট।',
+  openGraph: {
+    title: 'ভর্তি নির্দেশিকা | সাহেরা নায়েব ল্যাবরেটরি হাই স্কুল',
+    description: '২০২৬ শিক্ষাবর্ষের ভর্তি সংক্রান্ত প্রয়োজনীয় সকল তথ্যাবলী ও ফি চার্ট।',
+  },
+};
 
 export default async function PublicAdmissionPage() {
   let schoolName = 'সাহেরা নায়েব ল্যাবরেটরি হাই স্কুল';
