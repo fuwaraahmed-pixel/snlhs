@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Plus, Search, Trash2, Edit3, Eye, EyeOff,
-  Loader2, Camera, X, Users, AlertCircle, CheckCircle
+  Loader2, Camera, X, Users, AlertCircle, CheckCircle, ChevronLeft, ChevronRight
 } from 'lucide-react';
 import {
   getAdminTeachers,
@@ -29,6 +29,8 @@ const getDeptStyle = (dept: string) => DEPT_COLORS[dept] || DEPT_COLORS['সা�
 const getInitials = (name: string) =>
   name ? name.trim().split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase() : '?';
 
+const PAGE_SIZE = 20;
+
 export default function TeacherManagementPage() {
   const [teachers, setTeachers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -41,6 +43,11 @@ export default function TeacherManagementPage() {
   const [photoUploading, setPhotoUploading] = useState(false);
   const [photoUploadError, setPhotoUploadError] = useState<string | null>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalTeachers, setTotalTeachers] = useState(0);
+  const totalPages = Math.max(1, Math.ceil(totalTeachers / PAGE_SIZE));
 
   // Delete modal state
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -57,15 +64,25 @@ export default function TeacherManagementPage() {
   const [biography, setBiography] = useState('');
   const [isPublished, setIsPublished] = useState(true);
 
-  const loadTeachers = async () => {
+  const loadTeachers = useCallback(async (page: number = 1) => {
     setLoading(true); setActionError(null);
-    const res = await getAdminTeachers();
+    const res = await getAdminTeachers(page, PAGE_SIZE);
     if (res.error) setActionError(res.error);
-    else setTeachers(res.teachers);
+    else {
+      setTeachers(res.teachers);
+      setTotalTeachers(res.total);
+    }
     setLoading(false);
-  };
+  }, []);
 
-  useEffect(() => { loadTeachers(); }, []);
+  useEffect(() => { loadTeachers(1); }, [loadTeachers]);
+
+  const goToPage = (page: number) => {
+    if (page < 1 || page > totalPages) return;
+    setCurrentPage(page);
+    setSearchTerm('');
+    loadTeachers(page);
+  };
 
   const handleOpenModal = (teacher?: any) => {
     setActionError(null); setPhotoUploadError(null);
@@ -102,7 +119,7 @@ export default function TeacherManagementPage() {
       setIsModalOpen(false);
       setActionSuccess(editingId ? 'প্রোফাইল আপডেট হয়েছে।' : 'নতুন শিক্ষক যুক্ত হয়েছে।');
       setTimeout(() => setActionSuccess(null), 4000);
-      await loadTeachers();
+      await loadTeachers(currentPage);
     } else setActionError(res.error || 'সংরক্ষণ ব্যর্থ');
     setSubmitting(false);
   };
@@ -123,7 +140,9 @@ export default function TeacherManagementPage() {
       setActionSuccess('প্রোফাইল মুছে ফেলা হয়েছে।');
       setTeacherToDelete(null);
       setTimeout(() => setActionSuccess(null), 4000);
-      await loadTeachers();
+      const nextPage = teachers.length === 1 && currentPage > 1 ? currentPage - 1 : currentPage;
+      setCurrentPage(nextPage);
+      await loadTeachers(nextPage);
     } else {
       setActionError(res.error || 'মুছতে ব্যর্থ');
     }
@@ -131,7 +150,7 @@ export default function TeacherManagementPage() {
 
   const handleTogglePublish = async (id: string, s: boolean) => {
     const res = await toggleTeacherPublishAction(id, s);
-    if (res.success) await loadTeachers();
+    if (res.success) await loadTeachers(currentPage);
     else setActionError(res.error || 'স্ট্যাটাস পরিবর্তন ব্যর্থ');
   };
 
@@ -148,7 +167,7 @@ export default function TeacherManagementPage() {
         <div className="page-header-left">
           <h1 className="page-title">
             শিক্ষক ও কর্মচারী
-            <span className="page-title-count">{teachers.length}জন</span>
+            <span className="page-title-count">{totalTeachers}জন</span>
           </h1>
           <p className="page-subtitle">শিক্ষকমণ্ডলী ও স্টাফদের প্রোফাইল পরিচালনা করুন</p>
         </div>
@@ -271,6 +290,65 @@ export default function TeacherManagementPage() {
               })}
             </tbody>
           </table>
+
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '14px 20px',
+              borderTop: '1px solid var(--neutral-100)',
+              backgroundColor: 'var(--white)',
+            }}>
+              <span style={{ fontSize: '13px', color: 'var(--neutral-500)' }}>
+                পৃষ্ঠা {currentPage} / {totalPages} &nbsp;•&nbsp; মোট {totalTeachers}জন শিক্ষক
+              </span>
+              <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                <button
+                  onClick={() => goToPage(currentPage - 1)}
+                  disabled={currentPage === 1 || loading}
+                  className="btn btn-outline btn-sm"
+                  style={{ display: 'flex', alignItems: 'center', gap: '4px' }}
+                >
+                  <ChevronLeft size={15} /> পূর্ববর্তী
+                </button>
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  const startPage = Math.max(1, Math.min(currentPage - 2, totalPages - 4));
+                  const p = startPage + i;
+                  if (p > totalPages) return null;
+                  return (
+                    <button
+                      key={p}
+                      onClick={() => goToPage(p)}
+                      disabled={loading}
+                      style={{
+                        width: '34px', height: '34px',
+                        borderRadius: '6px',
+                        border: '1px solid',
+                        cursor: 'pointer',
+                        fontSize: '13px', fontWeight: 600,
+                        background: p === currentPage ? '#1b365d' : '#f8fafc',
+                        color: p === currentPage ? '#fff' : '#475569',
+                        borderColor: p === currentPage ? '#1b365d' : '#d4dde9',
+                        transition: 'all 0.13s',
+                      }}
+                    >
+                      {p}
+                    </button>
+                  );
+                })}
+                <button
+                  onClick={() => goToPage(currentPage + 1)}
+                  disabled={currentPage === totalPages || loading}
+                  className="btn btn-outline btn-sm"
+                  style={{ display: 'flex', alignItems: 'center', gap: '4px' }}
+                >
+                  পরবর্তী <ChevronRight size={15} />
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 

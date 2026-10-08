@@ -32,26 +32,33 @@ async function verifyAdminAuth() {
   return { error: null, user, profile, supabase };
 }
 
-export async function getAdminNotices(): Promise<{ notices: any[]; schoolId?: string; error?: string }> {
+export async function getAdminNotices(
+  page: number = 1,
+  pageSize: number = 20
+): Promise<{ notices: any[]; schoolId?: string; total: number; error?: string }> {
   try {
     const { error: authError, profile, supabase } = await verifyAdminAuth();
     if (authError || !profile) {
-      return { notices: [], error: authError || 'অনুমতি নেই' };
+      return { notices: [], total: 0, error: authError || 'অনুমতি নেই' };
     }
 
-    const { data, error } = await supabase
+    const from = (page - 1) * pageSize;
+    const to = from + pageSize - 1;
+
+    const { data, error, count } = await supabase
       .from('notices')
-      .select('*')
+      .select('*', { count: 'exact' })
       .eq('school_id', profile.school_id)
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false })
+      .range(from, to);
 
     if (error) {
-      return { notices: [], error: `নোটিশ তালিকা লোড করতে ব্যর্থ: ${error.message}` };
+      return { notices: [], total: 0, error: `নোটিশ তালিকা লোড করতে ব্যর্থ: ${error.message}` };
     }
 
-    return { notices: data || [], schoolId: profile.school_id };
+    return { notices: data || [], schoolId: profile.school_id, total: count ?? 0 };
   } catch (err: any) {
-    return { notices: [], error: `সার্ভার এরর: ${err.message}` };
+    return { notices: [], total: 0, error: `সার্ভার এরর: ${err.message}` };
   }
 }
 

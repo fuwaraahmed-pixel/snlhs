@@ -33,26 +33,33 @@ async function verifyAdminAuth() {
 }
 
 // 1. Get Admin Teachers
-export async function getAdminTeachers(): Promise<{ teachers: any[]; schoolId?: string; error?: string }> {
+export async function getAdminTeachers(
+  page: number = 1,
+  pageSize: number = 20
+): Promise<{ teachers: any[]; schoolId?: string; total: number; error?: string }> {
   try {
     const { error: authError, profile, supabase } = await verifyAdminAuth();
     if (authError || !profile) {
-      return { teachers: [], error: authError || 'অনুমতি নেই' };
+      return { teachers: [], total: 0, error: authError || 'অনুমতি নেই' };
     }
 
-    const { data, error } = await supabase
+    const from = (page - 1) * pageSize;
+    const to = from + pageSize - 1;
+
+    const { data, error, count } = await supabase
       .from('teachers')
-      .select('*')
+      .select('*', { count: 'exact' })
       .eq('school_id', profile.school_id)
-      .order('display_order', { ascending: true });
+      .order('display_order', { ascending: true })
+      .range(from, to);
 
     if (error) {
-      return { teachers: [], error: `শিক্ষকদের তালিকা লোড করতে ব্যর্থ: ${error.message}` };
+      return { teachers: [], total: 0, error: `শিক্ষকদের তালিকা লোড করতে ব্যর্থ: ${error.message}` };
     }
 
-    return { teachers: data || [], schoolId: profile.school_id };
+    return { teachers: data || [], schoolId: profile.school_id, total: count ?? 0 };
   } catch (err: any) {
-    return { teachers: [], error: `সার্ভার এরর: ${err.message}` };
+    return { teachers: [], total: 0, error: `সার্ভার এরর: ${err.message}` };
   }
 }
 

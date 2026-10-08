@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Plus, Search, Trash2, Edit3, CheckCircle, XCircle, FileText,
-  Download, Loader2, AlertCircle, Bell, X, Filter
+  Download, Loader2, AlertCircle, Bell, X, Filter, ChevronLeft, ChevronRight
 } from 'lucide-react';
 import { uploadFileToStorage } from '@/lib/storage/upload';
 import { getStoragePublicUrl } from '@/lib/storage/url-builder';
@@ -39,11 +39,18 @@ const categoryBadgeClass: Record<string, string> = {
   'ইভেন্ট': 'badge-event',
 };
 
+const PAGE_SIZE = 20;
+
 export default function NoticeManagementPage() {
   const [notices, setNotices] = useState<NoticeItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalNotices, setTotalNotices] = useState(0);
+  const totalPages = Math.max(1, Math.ceil(totalNotices / PAGE_SIZE));
 
   const [searchTerm, setSearchTerm] = useState('');
   const [activeCategory, setActiveCategory] = useState('সব');
@@ -70,20 +77,29 @@ export default function NoticeManagementPage() {
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [schoolId, setSchoolId] = useState<string | null>(null);
 
-  const loadNotices = async () => {
+  const loadNotices = useCallback(async (page: number = 1) => {
     setLoading(true);
     setErrorMsg(null);
-    const res = await getAdminNotices();
+    const res = await getAdminNotices(page, PAGE_SIZE);
     if (res.error) {
       setErrorMsg(res.error);
     } else {
       setNotices(res.notices || []);
+      setTotalNotices(res.total);
       if (res.schoolId) setSchoolId(res.schoolId);
     }
     setLoading(false);
-  };
+  }, []);
 
-  useEffect(() => { loadNotices(); }, []);
+  useEffect(() => { loadNotices(1); }, [loadNotices]);
+
+  const goToPage = (page: number) => {
+    if (page < 1 || page > totalPages) return;
+    setCurrentPage(page);
+    setSearchTerm('');
+    setActiveCategory('সব');
+    loadNotices(page);
+  };
 
   const handleOpenModal = (notice?: NoticeItem) => {
     setUploadError(null);
@@ -134,7 +150,7 @@ export default function NoticeManagementPage() {
     if (result.success) {
       setSuccessMsg(editingId ? 'নোটিশ আপডেট হয়েছে।' : 'নতুন নোটিশ প্রকাশিত হয়েছে।');
       setIsModalOpen(false);
-      loadNotices();
+      loadNotices(currentPage);
       setTimeout(() => setSuccessMsg(null), 4000);
     } else {
       setErrorMsg(result.error || 'অপারেশন ব্যর্থ।');
@@ -157,7 +173,10 @@ export default function NoticeManagementPage() {
     if (res.success) {
       setSuccessMsg('নোটিশ মুছে ফেলা হয়েছে।');
       setNoticeToDelete(null);
-      loadNotices();
+      // If last item on page, go to previous page
+      const nextPage = notices.length === 1 && currentPage > 1 ? currentPage - 1 : currentPage;
+      setCurrentPage(nextPage);
+      loadNotices(nextPage);
       setTimeout(() => setSuccessMsg(null), 4000);
     } else {
       setErrorMsg(res.error || 'মুছতে ব্যর্থ।');
@@ -166,7 +185,7 @@ export default function NoticeManagementPage() {
 
   const handleTogglePublish = async (id: string, currentStatus: boolean) => {
     const res = await toggleNoticePublishAction(id, currentStatus);
-    if (res.success) loadNotices();
+    if (res.success) loadNotices(currentPage);
     else setErrorMsg(res.error || 'স্ট্যাটাস পরিবর্তন ব্যর্থ।');
   };
 
@@ -183,7 +202,7 @@ export default function NoticeManagementPage() {
         <div className="page-header-left">
           <h1 className="page-title">
             নোটিশ বোর্ড
-            <span className="page-title-count">{notices.length}টি</span>
+            <span className="page-title-count">{totalNotices}টি</span>
           </h1>
           <p className="page-subtitle">স্কুলের নোটিশ ও পিডিএফ ফাইল পরিচালনা করুন</p>
         </div>
@@ -354,6 +373,65 @@ export default function NoticeManagementPage() {
               })}
             </tbody>
           </table>
+
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '14px 20px',
+              borderTop: '1px solid var(--neutral-100)',
+              backgroundColor: 'var(--white)',
+            }}>
+              <span style={{ fontSize: '13px', color: 'var(--neutral-500)' }}>
+                পৃষ্ঠা {currentPage} / {totalPages} &nbsp;•&nbsp; মোট {totalNotices}টি নোটিশ
+              </span>
+              <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                <button
+                  onClick={() => goToPage(currentPage - 1)}
+                  disabled={currentPage === 1 || loading}
+                  className="btn btn-outline btn-sm"
+                  style={{ display: 'flex', alignItems: 'center', gap: '4px' }}
+                >
+                  <ChevronLeft size={15} /> পূর্ববর্তী
+                </button>
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  const startPage = Math.max(1, Math.min(currentPage - 2, totalPages - 4));
+                  const p = startPage + i;
+                  if (p > totalPages) return null;
+                  return (
+                    <button
+                      key={p}
+                      onClick={() => goToPage(p)}
+                      disabled={loading}
+                      style={{
+                        width: '34px', height: '34px',
+                        borderRadius: '6px',
+                        border: '1px solid',
+                        cursor: 'pointer',
+                        fontSize: '13px', fontWeight: 600,
+                        background: p === currentPage ? '#1b365d' : '#f8fafc',
+                        color: p === currentPage ? '#fff' : '#475569',
+                        borderColor: p === currentPage ? '#1b365d' : '#d4dde9',
+                        transition: 'all 0.13s',
+                      }}
+                    >
+                      {p}
+                    </button>
+                  );
+                })}
+                <button
+                  onClick={() => goToPage(currentPage + 1)}
+                  disabled={currentPage === totalPages || loading}
+                  className="btn btn-outline btn-sm"
+                  style={{ display: 'flex', alignItems: 'center', gap: '4px' }}
+                >
+                  পরবর্তী <ChevronRight size={15} />
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 

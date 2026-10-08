@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/db/supabase-client';
 import { Lock, Mail, Eye, EyeOff, ShieldAlert } from 'lucide-react';
@@ -12,9 +12,33 @@ export default function AdminLoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [failedAttempts, setFailedAttempts] = useState(0);
+  const [lockoutTimer, setLockoutTimer] = useState(0);
+
+  // Countdown timer for lockout cooldown
+  useEffect(() => {
+    if (lockoutTimer > 0) {
+      const interval = setInterval(() => {
+        setLockoutTimer((prev) => {
+          if (prev <= 1) {
+            setFailedAttempts(0);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+      return () => clearInterval(interval);
+    }
+  }, [lockoutTimer]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (lockoutTimer > 0) {
+      setErrorMsg(`অতিরিক্ত ভুল চেষ্টার কারণে লগইন সাময়িক স্থগিত। অনুগ্রহ করে ${lockoutTimer} সেকেন্ড অপেক্ষা করুন।`);
+      return;
+    }
+
     setErrorMsg(null);
     setIsLoading(true);
 
@@ -26,10 +50,20 @@ export default function AdminLoginPage() {
       });
 
       if (error) {
-        setErrorMsg('ইমেইল বা পাসওয়ার্ড ভুল হয়েছে। সঠিক তথ্য প্রদান করুন।');
+        const nextAttempts = failedAttempts + 1;
+        setFailedAttempts(nextAttempts);
+
+        if (nextAttempts >= 5) {
+          setLockoutTimer(60);
+          setErrorMsg('পরপর ৫ বার ভুল চেষ্টার কারণে অ্যাকাউন্ট সুরক্ষা নিশ্চিতে লগইন ৬০ সেকেন্ডের জন্য স্থগিত করা হয়েছে।');
+        } else {
+          setErrorMsg(`ইমেইল বা পাসওয়ার্ড ভুল হয়েছে। (বাকি চেষ্টা: ${5 - nextAttempts} বার)`);
+        }
         return;
       }
 
+      // Reset attempts on successful login
+      setFailedAttempts(0);
       // Force full window reload navigation so browser cookies & Supabase SSR middleware sync seamlessly
       window.location.href = '/admin/dashboard';
     } catch (err: any) {

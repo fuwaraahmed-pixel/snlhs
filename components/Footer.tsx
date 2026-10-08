@@ -216,8 +216,9 @@ export default function Footer({ schoolInfo }: FooterProps) {
           <div>
             © ২০২৬ <strong style={{ color: '#e2e8f0' }}>{name}</strong>। সর্বস্বত্ব সংরক্ষিত।
           </div>
-          <div style={{ display: 'flex', gap: '16px' }}>
-            <Link href="/admission" style={{ color: '#94a3b8', textDecoration: 'none' }}>ভর্তি প্রক্রিয়া</Link>
+          <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+            <Link href="/privacy-policy" style={{ color: '#94a3b8', textDecoration: 'none' }}>গোপনীয়তা নীতি</Link>
+            <Link href="/terms-of-service" style={{ color: '#94a3b8', textDecoration: 'none' }}>শর্তাবলী</Link>
             <Link href="/contact" style={{ color: '#94a3b8', textDecoration: 'none' }}>যোগাযোগ</Link>
             <Link href="/admin" style={{ color: '#c59b27', textDecoration: 'none', fontWeight: 600 }}>প্রশাসনিক লগইন</Link>
           </div>

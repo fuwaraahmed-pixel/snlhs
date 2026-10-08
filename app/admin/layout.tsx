@@ -16,6 +16,7 @@ import {
   Menu,
   X,
   ChevronRight,
+  Mail,
 } from 'lucide-react';
 
 const navItems = [
@@ -24,6 +25,7 @@ const navItems = [
   { name: 'শিক্ষক ও কর্মচারী', href: '/admin/teachers', icon: Users },
   { name: 'ইভেন্ট ব্যবস্থাপনা', href: '/admin/events', icon: Calendar },
   { name: 'গ্যালারি অ্যালবাম', href: '/admin/gallery', icon: ImageIcon },
+  { name: 'যোগাযোগ বার্তা', href: '/admin/messages', icon: Mail },
   { name: 'সেটিংস', href: '/admin/settings', icon: Settings },
 ];
 
@@ -33,6 +35,7 @@ const pageTitles: Record<string, string> = {
   '/admin/teachers': 'শিক্ষক ও কর্মচারী',
   '/admin/events': 'ইভেন্ট ব্যবস্থাপনা',
   '/admin/gallery': 'গ্যালারি অ্যালবাম',
+  '/admin/messages': 'যোগাযোগ বার্তা',
   '/admin/settings': 'সেটিংস',
 };
 
