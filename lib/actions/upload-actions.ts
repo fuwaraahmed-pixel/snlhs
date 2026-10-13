@@ -272,3 +272,59 @@ export async function uploadGalleryImageAction(
     return { success: false, error: `সার্ভার এরর: ${err.message}` };
   }
 }
+
+/**
+ * Server action: Upload school logo to Supabase Storage (school-assets bucket).
+ * Returns the public URL to be stored in schools.logo_url.
+ */
+export async function uploadSchoolLogoAction(
+  formData: FormData
+): Promise<{ success: boolean; error?: string; publicUrl?: string }> {
+  try {
+    const supabase = await createClient();
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError || !user) return { success: false, error: 'অনুগ্রহ করে লগইন করুন।' };
+
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('role, school_id')
+      .eq('id', user.id)
+      .single();
+    if (profileError || !profile || profile.role !== 'admin') {
+      return { success: false, error: 'অ্যাডমিন অনুমতি প্রয়োজন।' };
+    }
+
+    const file = formData.get('file') as File | null;
+    if (!file) return { success: false, error: 'কোনো ফাইল পাওয়া যায়নি।' };
+
+    const allowed = ALLOWED_MIME_TYPES['school-assets'];
+    if (!allowed.includes(file.type)) {
+      return { success: false, error: 'লোগোর ফরম্যাট অননুমোদিত। JPG/PNG/WebP/ICO ব্যবহার করুন।' };
+    }
+    if (file.size > MAX_SIZE_BYTES['school-assets']) {
+      return { success: false, error: 'লোগো সাইজ সর্বোচ্চ ৫MB হতে হবে।' };
+    }
+
+    const ext = file.name.substring(file.name.lastIndexOf('.')).toLowerCase() || '.png';
+    const path = `${profile.school_id}/assets/logo_${Date.now()}_${Math.random().toString(36).substring(2, 8)}${ext}`;
+
+    const arrayBuffer = await file.arrayBuffer();
+    const { error: storageError } = await supabase.storage
+      .from('school-assets')
+      .upload(path, arrayBuffer, { contentType: file.type, upsert: false });
+
+    if (storageError) return { success: false, error: `লোগো আপলোড ব্যর্থ: ${storageError.message}` };
+
+    const { data: { publicUrl } } = supabase.storage.from('school-assets').getPublicUrl(path);
+
+    revalidatePath('/admin/settings');
+    revalidatePath('/');
+    revalidatePath('/about');
+    revalidatePath('/contact');
+
+    return { success: true, publicUrl };
+  } catch (err: any) {
+    return { success: false, error: `সার্ভার এরর: ${err.message}` };
+  }
+}
+

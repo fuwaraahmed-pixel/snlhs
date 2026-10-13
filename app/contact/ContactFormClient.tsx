@@ -22,9 +22,20 @@ export default function ContactFormClient() {
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
+    const { name, value } = e.target;
+    // মোবাইল নম্বর ফিল্ডে শুধু ইংরেজি ডিজিট (0-9) অনুমতি দেওয়া হবে এবং সর্বোচ্চ ১১ ডিজিট রাখা হবে
+    if (name === 'phone') {
+      const sanitized = value.replace(/[^0-9]/g, '').slice(0, 11);
+      setFormData((prev) => ({
+        ...prev,
+        phone: sanitized,
+      }));
+      return;
+    }
+
     setFormData((prev) => ({
       ...prev,
-      [e.target.name]: e.target.value,
+      [name]: value,
     }));
   };
 
@@ -143,7 +154,7 @@ export default function ContactFormClient() {
               name="name"
               type="text"
               required
-              placeholder="যেমন: মোঃ কামরুল ইসলাম"
+              placeholder="যেমন: ফুরকান আহমেদ"
               value={formData.name}
               onChange={handleChange}
               style={{
@@ -163,14 +174,18 @@ export default function ContactFormClient() {
               htmlFor="phone"
               style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}
             >
-              মোবাইল নম্বর <span style={{ color: '#dc2626' }}>*</span>
+              মোবাইল নম্বর (ইংরেজিতে) <span style={{ color: '#dc2626' }}>*</span>
             </label>
             <input
               id="phone"
               name="phone"
               type="tel"
+              inputMode="numeric"
               required
-              placeholder="যেমন: 017xxxxxxxx"
+              maxLength={11}
+              pattern="^01[3-9][0-9]{8}$"
+              title="১১ ডিজিটের ইংরেজি নম্বর লিখুন (যেমন: 01712345678)"
+              placeholder="যেমন: 017xxxxxxxx (ইংরেজিতে)"
               value={formData.phone}
               onChange={handleChange}
               style={{

@@ -65,7 +65,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  if (user && isPublicAdminRoute) {
+  if (user && isPublicAdminRoute && pathname !== '/admin/reset-password') {
     const url = request.nextUrl.clone();
     url.pathname = '/admin/dashboard';
     const redirectResponse = NextResponse.redirect(url);

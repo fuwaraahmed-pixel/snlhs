@@ -36,7 +36,7 @@ export default async function PublicAboutPage() {
     const supabase = createPublicClient();
     const { data: schoolData } = await supabase
       .from('schools')
-      .select('name, phone, email, address, settings')
+      .select('name, phone, email, address, logo_url, settings')
       .limit(1)
       .single();
 
@@ -47,6 +47,7 @@ export default async function PublicAboutPage() {
         phone: schoolData.phone || schoolInfo.phone,
         email: schoolData.email || schoolInfo.email,
         address: schoolData.address || schoolInfo.address,
+        logo_url: schoolData.logo_url || null,
         eiin: settings.eiin || schoolInfo.eiin,
         established: settings.established || schoolInfo.established,
         board: settings.board || schoolInfo.board,

@@ -1,6 +1,9 @@
-import React from 'react';
+'use client';
+
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { School, Phone, Mail, MapPin, Clock, ArrowRight, ShieldCheck } from 'lucide-react';
+import { createClient } from '@/lib/db/supabase-client';
 
 interface FooterProps {
   schoolInfo?: {
@@ -11,17 +14,61 @@ interface FooterProps {
     eiin?: string;
     board?: string;
     motto?: string;
+    logo_url?: string | null;
   };
 }
 
 export default function Footer({ schoolInfo }: FooterProps) {
-  const name = schoolInfo?.name || 'সাহেরা নায়েব ল্যাবরেটরি হাই স্কুল';
-  const phone = schoolInfo?.phone || '01531927956';
-  const email = schoolInfo?.email || 'snlschool07@gmail.com';
-  const address = schoolInfo?.address || 'হবিরবাড়ী, সিড্‌স্টোর বাজার, ভালুকা, ময়মনসিংহ।';
-  const eiin = schoolInfo?.eiin || '138293';
-  const board = schoolInfo?.board || 'ঢাকা শিক্ষা বোর্ড';
-  const motto = schoolInfo?.motto || 'শিক্ষা • শৃঙ্খলা • চরিত্র';
+  const [info, setInfo] = useState({
+    name: schoolInfo?.name || 'সাহেরা নায়েব ল্যাবরেটরি হাই স্কুল',
+    phone: schoolInfo?.phone || '01531927956',
+    email: schoolInfo?.email || 'snlschool07@gmail.com',
+    address: schoolInfo?.address || 'হবিরবাড়ী, সিড্‌স্টোর বাজার, ভালুকা, ময়মনসিংহ।',
+    eiin: schoolInfo?.eiin || '138293',
+    board: schoolInfo?.board || 'ঢাকা শিক্ষা বোর্ড',
+    motto: schoolInfo?.motto || 'শিক্ষা • শৃঙ্খলা • চরিত্র',
+    logo_url: schoolInfo?.logo_url || null,
+  });
+
+  useEffect(() => {
+    async function fetchSchoolInfo() {
+      try {
+        const supabase = createClient();
+        const { data, error } = await supabase
+          .from('schools')
+          .select('name, phone, email, address, logo_url, settings')
+          .limit(1)
+          .maybeSingle();
+
+        if (data && !error) {
+          const st = (data.settings as Record<string, any>) || {};
+          setInfo((prev) => ({
+            name: data.name || prev.name,
+            phone: data.phone || prev.phone,
+            email: data.email || prev.email,
+            address: data.address || prev.address,
+            eiin: st.eiin || prev.eiin,
+            board: st.board || prev.board,
+            motto: st.motto || prev.motto,
+            logo_url: data.logo_url || prev.logo_url,
+          }));
+        }
+      } catch (err) {
+        // Fallback gracefully
+      }
+    }
+
+    fetchSchoolInfo();
+  }, []);
+
+  const name = info.name;
+  const phone = info.phone;
+  const email = info.email;
+  const address = info.address;
+  const eiin = info.eiin;
+  const board = info.board;
+  const motto = info.motto;
+  const logoUrl = info.logo_url;
 
   return (
     <footer className="site-footer" style={{ backgroundColor: 'var(--primary-900, #0f1d38)', color: 'var(--neutral-300, #cbd5e1)', marginTop: 'auto', borderTop: '4px solid var(--accent-gold, #c59b27)' }}>
@@ -37,18 +84,24 @@ export default function Footer({ schoolInfo }: FooterProps) {
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '14px' }}>
                 <div style={{
-                  width: '42px',
-                  height: '42px',
+                  width: '44px',
+                  height: '44px',
                   borderRadius: '10px',
-                  background: 'linear-gradient(135deg, #c59b27, #e0b84c)',
+                  background: logoUrl ? '#ffffff' : 'linear-gradient(135deg, #c59b27, #e0b84c)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   color: '#0f1d38',
                   boxShadow: '0 2px 8px rgba(197, 155, 39, 0.3)',
-                  flexShrink: 0
+                  flexShrink: 0,
+                  overflow: 'hidden',
+                  padding: logoUrl ? '3px' : '0'
                 }}>
-                  <School size={22} />
+                  {logoUrl ? (
+                    <img src={logoUrl} alt={name} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                  ) : (
+                    <School size={22} />
+                  )}
                 </div>
                 <div>
                   <h3 style={{ color: '#fff', fontSize: '16px', fontWeight: 700, margin: 0, lineHeight: 1.3 }}>

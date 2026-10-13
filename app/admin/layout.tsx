@@ -50,14 +50,18 @@ export default function AdminRootLayout({
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [schoolName, setSchoolName] = useState('সাহেরা নায়েব হাই স্কুল');
+  const [schoolLogo, setSchoolLogo] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadSchool() {
       try {
         const supabase = createClient();
-        const { data } = await supabase.from('schools').select('name').limit(1).maybeSingle();
+        const { data } = await supabase.from('schools').select('name, logo_url').limit(1).maybeSingle();
         if (data?.name) {
           setSchoolName(data.name);
+        }
+        if (data?.logo_url) {
+          setSchoolLogo(data.logo_url);
         }
       } catch (err) {
         // Fallback gracefully
@@ -100,8 +104,12 @@ export default function AdminRootLayout({
       <aside className={`admin-sidebar${sidebarOpen ? ' open' : ''}`}>
         {/* Header */}
         <div className="admin-sidebar-header">
-          <div className="sidebar-logo-icon">
-            <SchoolIcon size={20} color="#0f1d38" />
+          <div className="sidebar-logo-icon" style={{ overflow: 'hidden', background: schoolLogo ? '#fff' : undefined, padding: schoolLogo ? '2px' : undefined }}>
+            {schoolLogo ? (
+              <img src={schoolLogo} alt={schoolName} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+            ) : (
+              <SchoolIcon size={20} color="#0f1d38" />
+            )}
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <p className="sidebar-school-name">{schoolName}</p>

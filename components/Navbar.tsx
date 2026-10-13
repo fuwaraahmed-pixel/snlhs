@@ -18,6 +18,7 @@ export default function Navbar({ activePage = 'home', schoolName: initialSchoolN
     eiin: '138293',
     board: 'ঢাকা শিক্ষা বোর্ড',
     motto: 'শিক্ষা • শৃঙ্খলা • চরিত্র',
+    logoUrl: null as string | null,
   });
 
   useEffect(() => {
@@ -26,7 +27,7 @@ export default function Navbar({ activePage = 'home', schoolName: initialSchoolN
         const supabase = createClient();
         const { data, error } = await supabase
           .from('schools')
-          .select('name, phone, settings')
+          .select('name, phone, logo_url, settings')
           .limit(1)
           .maybeSingle();
 
@@ -38,6 +39,7 @@ export default function Navbar({ activePage = 'home', schoolName: initialSchoolN
             eiin: st.eiin || '138293',
             board: st.board || 'ঢাকা শিক্ষা বোর্ড',
             motto: st.motto || 'শিক্ষা • শৃঙ্খলা • চরিত্র',
+            logoUrl: data.logo_url || null,
           });
         }
       } catch (err) {
@@ -86,18 +88,29 @@ export default function Navbar({ activePage = 'home', schoolName: initialSchoolN
           {/* Logo & School Name */}
           <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '10px' }}>
             <div style={{
-              width: '40px',
-              height: '40px',
+              width: '42px',
+              height: '42px',
               borderRadius: 'var(--radius-md)',
-              backgroundColor: 'var(--primary-700)',
+              backgroundColor: schoolInfo.logoUrl ? '#ffffff' : 'var(--primary-700)',
               color: 'var(--accent-gold)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               fontWeight: 'bold',
-              flexShrink: 0
+              flexShrink: 0,
+              overflow: 'hidden',
+              border: schoolInfo.logoUrl ? '1px solid var(--neutral-200)' : 'none',
+              padding: schoolInfo.logoUrl ? '2px' : '0'
             }}>
-              <SchoolIcon size={22} />
+              {schoolInfo.logoUrl ? (
+                <img
+                  src={schoolInfo.logoUrl}
+                  alt={schoolInfo.name}
+                  style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                />
+              ) : (
+                <SchoolIcon size={22} />
+              )}
             </div>
             <div>
               <h1 style={{ fontSize: 'var(--text-lg)', color: 'var(--primary-900)', margin: 0, fontWeight: 700, lineHeight: 1.2 }}>

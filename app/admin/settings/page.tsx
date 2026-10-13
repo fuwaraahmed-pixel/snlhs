@@ -1,13 +1,15 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import {
   Save, CheckCircle2, Loader2, AlertCircle,
   Building2, Phone, Mail, MapPin, BookOpen, User, GraduationCap,
-  BarChart3, Megaphone, Sparkles
+  BarChart3, Megaphone, Sparkles, Upload, Trash2, ImageIcon
 } from 'lucide-react';
 import { getAdminSchoolSettings, updateSchoolSettingsAction } from '@/lib/actions/settings-actions';
+import { uploadSchoolLogoAction } from '@/lib/actions/upload-actions';
 
 type Tab = 'basic' | 'contact' | 'homepage' | 'principal';
 
@@ -18,6 +20,12 @@ export default function SchoolSettingsPage() {
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+
+  // Logo state
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [logoUploading, setLogoUploading] = useState(false);
+  const [logoError, setLogoError] = useState<string | null>(null);
+  const logoInputRef = useRef<HTMLInputElement>(null);
 
   const [name, setName] = useState('সাহেরা নায়েব ল্যাবরেটরি হাই স্কুল');
   const [phone, setPhone] = useState('01531927956');
@@ -50,6 +58,7 @@ export default function SchoolSettingsPage() {
       const s = res.school; const st = s.settings || {};
       setName(s.name || ''); setPhone(s.phone || '');
       setEmail(s.email || ''); setAddress(s.address || '');
+      setLogoUrl(s.logo_url || null);
       setEiin(st.eiin || '138293'); setEstablished(st.established || '১৯৯৮');
       setBoard(st.board || 'ঢাকা শিক্ষা বোর্ড'); setMotto(st.motto || 'শিক্ষা • শৃঙ্খলা • চরিত্র');
       setPrincipalName(st.principal_name || ''); setPrincipalMessage(st.principal_message || '');
@@ -75,6 +84,25 @@ export default function SchoolSettingsPage() {
 
   useEffect(() => { loadSettings(); }, []);
 
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setLogoUploading(true);
+    setLogoError(null);
+    const fd = new FormData();
+    fd.append('file', file);
+
+    const res = await uploadSchoolLogoAction(fd);
+    if (res.success && res.publicUrl) {
+      setLogoUrl(res.publicUrl);
+    } else {
+      setLogoError(res.error || 'লোগো আপলোড ব্যর্থ');
+    }
+    setLogoUploading(false);
+    if (logoInputRef.current) logoInputRef.current.value = '';
+  };
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault(); setSubmitting(true); setErrorMsg(null); setSuccessMsg(null);
     const payload = {
@@ -82,6 +110,7 @@ export default function SchoolSettingsPage() {
       phone,
       email,
       address,
+      logo_url: logoUrl,
       settings: {
         eiin,
         established,
@@ -178,6 +207,121 @@ export default function SchoolSettingsPage() {
                 <div>
                   <h3 style={{ fontSize: '14px', fontWeight: 700, color: '#0f1d38', margin: 0 }}>মৌলিক তথ্য</h3>
                   <p style={{ fontSize: '12px', color: '#94a3b8', margin: 0 }}>স্কুলের নাম, বোর্ড ও মূল তথ্য</p>
+                </div>
+              </div>
+
+              {/* School Logo Section */}
+              <div className="form-group" style={{ marginBottom: '24px', paddingBottom: '20px', borderBottom: '1px solid #f1f5f9' }}>
+                <label className="form-label" style={{ fontWeight: 600, color: '#0f1d38', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <ImageIcon size={15} color="#1b365d" />
+                  <span>স্কুল লোগো (School Logo)</span>
+                </label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '20px', flexWrap: 'wrap' }}>
+                  {/* Logo Preview */}
+                  <div style={{
+                    width: '84px',
+                    height: '84px',
+                    borderRadius: '12px',
+                    border: '2px dashed #cbd5e1',
+                    background: '#f8fafc',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    position: 'relative',
+                    overflow: 'hidden',
+                    flexShrink: 0
+                  }}>
+                    {logoUrl ? (
+                      <img
+                        src={logoUrl}
+                        alt="School Logo"
+                        style={{ width: '100%', height: '100%', objectFit: 'contain', padding: '6px' }}
+                      />
+                    ) : (
+                      <div style={{ textAlign: 'center', color: '#94a3b8', fontSize: '11px' }}>
+                        <Building2 size={26} style={{ margin: '0 auto 4px', display: 'block', opacity: 0.6 }} />
+                        <span>লোগো নেই</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Actions */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <input
+                      type="file"
+                      ref={logoInputRef}
+                      onChange={handleLogoUpload}
+                      accept="image/png,image/jpeg,image/webp,image/x-icon"
+                      style={{ display: 'none' }}
+                      id="school-logo-input"
+                    />
+
+                    <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+                      <button
+                        type="button"
+                        disabled={logoUploading}
+                        onClick={() => logoInputRef.current?.click()}
+                        className="btn btn-secondary"
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          padding: '8px 16px',
+                          fontSize: '13px',
+                          fontWeight: 600,
+                          backgroundColor: '#1b365d',
+                          color: '#fff',
+                          border: 'none',
+                          borderRadius: '8px',
+                          cursor: logoUploading ? 'not-allowed' : 'pointer'
+                        }}
+                      >
+                        {logoUploading ? (
+                          <>
+                            <Loader2 size={14} className="animate-spin" />
+                            <span>আপলোড হচ্ছে...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Upload size={14} />
+                            <span>{logoUrl ? 'নতুন লোগো পরিবর্তন করুন' : 'লোগো আপলোড করুন'}</span>
+                          </>
+                        )}
+                      </button>
+
+                      {logoUrl && (
+                        <button
+                          type="button"
+                          onClick={() => setLogoUrl(null)}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '5px',
+                            padding: '8px 14px',
+                            fontSize: '13px',
+                            color: '#dc2626',
+                            background: '#fef2f2',
+                            border: '1px solid #fee2e2',
+                            borderRadius: '8px',
+                            cursor: 'pointer',
+                            fontWeight: 500
+                          }}
+                        >
+                          <Trash2 size={13} />
+                          <span>মুছে ফেলুন</span>
+                        </button>
+                      )}
+                    </div>
+
+                    <span style={{ fontSize: '12px', color: '#64748b' }}>
+                      অনুমোদিত ফরম্যাট: PNG, JPG, WebP (স্বচ্ছ ব্যাকগ্রাউন্ডের PNG বা বর্গাকার সাইজ সবচেয়ে ভালো দেখায়, সর্বোচ্চ ৫MB)
+                    </span>
+                    {logoError && (
+                      <span style={{ fontSize: '12px', color: '#dc2626', fontWeight: 500 }}>
+                        ⚠️ {logoError}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
 

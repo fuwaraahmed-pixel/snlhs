@@ -95,7 +95,8 @@ export const SchoolSettingsSchema = z.object({
 
 export const ContactMessageSchema = z.object({
   name: z.string().min(2, 'আপনার নাম লিখুন (কমপক্ষে ২ অক্ষর)'),
-  phone: z.string().min(11, 'সঠিক ১১ ডিজিটের মোবাইল নম্বর দিন'),
+  phone: z.string()
+    .regex(/^01[3-9]\d{8}$/, 'ইংরেজিতে সঠিক ১১ ডিজিটের মোবাইল নম্বর দিন (যেমন: 01712345678)'),
   email: z.string().email('সঠিক ইমেইল ঠিকানা দিন').optional().or(z.literal('')),
   subject: z.string().min(2, 'বার্তার বিষয় লিখুন'),
   message: z.string().min(5, 'বার্তা বিস্তারিত লিখুন (কমপক্ষে ৫ অক্ষর)'),

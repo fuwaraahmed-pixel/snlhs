@@ -33,7 +33,8 @@ export default async function PublicHomePage() {
       teachers: '৪৫+',
       passRate: '৯৮%',
       experience: '২৫+',
-    }
+    },
+    logo_url: null as string | null,
   };
 
   let recentNotices: any[] = [];
@@ -46,7 +47,7 @@ export default async function PublicHomePage() {
     const [schoolRes, noticesRes, eventsRes] = await Promise.all([
       supabase
         .from('schools')
-        .select('name, phone, email, address, settings')
+        .select('name, phone, email, address, logo_url, settings')
         .eq('slug', 'snlhs')
         .limit(1)
         .maybeSingle(),
@@ -71,6 +72,7 @@ export default async function PublicHomePage() {
       schoolInfo.phone = schoolData.phone || schoolInfo.phone;
       schoolInfo.email = schoolData.email || schoolInfo.email;
       schoolInfo.address = schoolData.address || schoolInfo.address;
+      schoolInfo.logo_url = schoolData.logo_url || null;
       schoolInfo.eiin = st.eiin || schoolInfo.eiin;
       schoolInfo.established = st.established || schoolInfo.established;
       schoolInfo.board = st.board || schoolInfo.board;

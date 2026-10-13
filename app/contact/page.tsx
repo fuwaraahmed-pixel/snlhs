@@ -32,7 +32,7 @@ export default async function PublicContactPage() {
     const supabase = createPublicClient();
     const { data: schoolData } = await supabase
       .from('schools')
-      .select('name, phone, email, address, settings')
+      .select('name, phone, email, address, logo_url, settings')
       .limit(1)
       .maybeSingle();
 
@@ -43,6 +43,7 @@ export default async function PublicContactPage() {
         phone: schoolData.phone || schoolInfo.phone,
         email: schoolData.email || schoolInfo.email,
         address: schoolData.address || schoolInfo.address,
+        logo_url: schoolData.logo_url || null,
         motto: settings.motto || schoolInfo.motto,
         principal_name: settings.principal_name || schoolInfo.principal_name,
       };
